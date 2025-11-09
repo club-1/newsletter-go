@@ -1,0 +1,6 @@
+# binaries
+/newsletter
+/newsletterctl
+
+# other files
+.env
