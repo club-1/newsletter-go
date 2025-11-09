@@ -1,6 +1,6 @@
 # binaries
-/newsletter
-/newsletterctl
+bin/*
+sbin/*
 
 # other files
 .env
