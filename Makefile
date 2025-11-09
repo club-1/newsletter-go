@@ -10,6 +10,6 @@ $(BINS):
 	CGO_ENABLED=0 go build -o $@ ./cmd/$(@F)
 
 deploy: $(BINS)
-	rsync --checksum --archive --verbose $(BINS) $(REMOTE):$(REMOTE_PATH)
+	rsync --checksum --archive --verbose bin sbin $(REMOTE):$(REMOTE_PATH)
 
 .PHONY: all $(BINS) deploy
