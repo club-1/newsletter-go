@@ -10,7 +10,7 @@ import (
 
 const Name = "newsletter"
 
-var l = log.New(os.Stderr, Name, 0)
+var l = log.New(os.Stderr, Name+": ", 0)
 
 func main() {
 	executable, err := os.Executable()
