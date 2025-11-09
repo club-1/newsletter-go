@@ -1,7 +1,14 @@
 package main
 
-import "fmt"
+import (
+	"log"
+	"os"
+)
+
+const Name = "newsletterctl"
+
+var l = log.New(os.Stderr, Name, 0)
 
 func main() {
-	fmt.Println("newsletterctl: hello world!")
+	l.Println("hello world!")
 }
