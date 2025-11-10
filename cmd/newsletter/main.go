@@ -10,6 +10,7 @@ import (
 
 const Name = "newsletter"
 
+var verbose bool
 var l = log.New(os.Stderr, Name+": ", 0)
 
 func getPrefix() (string, error) {
@@ -38,7 +39,9 @@ func Init() {
 	for _, route := range routes {
 		fileName := ".forward+" + route
 		filePath := filepath.Join(homeDir, fileName)
-		l.Println("writting file", filePath)
+		if verbose {
+			fmt.Println("writting file", filePath)
+		}
 
 		cmdPath := filepath.Join(prefix, "sbin/newsletterctl")
 		content := []byte("| \"" + cmdPath + " " + route + "\"\n")
@@ -51,6 +54,7 @@ func Init() {
 
 func main() {
 	log.SetFlags(0)
+	flag.BoolVar(&verbose, "v", false, "increase verbosity of program")
 
 	flag.Parse()
 
