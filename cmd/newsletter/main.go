@@ -1,12 +1,11 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
-
-	"github.com/club-1/newsletter-go"
 )
 
 const Name = "newsletter"
@@ -25,13 +24,44 @@ func getPrefix() (string, error) {
 	return filepath.Dir(filepath.Dir(realpath)), nil
 }
 
-func main() {
+func Init() {
 	prefix, err := getPrefix()
 	if err != nil {
 		l.Fatalln("cannot get prefix:", err)
 	}
-	mail := &newsletter.Mail{
-		Body: "coucou",
+
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		l.Fatalln("cannot get user home directory:", err)
 	}
-	l.Println("hello world:", mail, prefix)
+	routes := [5]string{"subscribe", "unsubscribe", "subscribe-confirm", "send", "send-confirm"}
+	for _, route := range routes {
+		fileName := ".forward+" + route
+		filePath := filepath.Join(homeDir, fileName)
+		l.Println("writting file", filePath)
+
+		cmdPath := filepath.Join(prefix, "sbin/newsletterctl")
+		content := []byte("| \"" + cmdPath + " " + route + "\"\n")
+		err := os.WriteFile(filePath, content, 0664)
+		if err != nil {
+			l.Println("cannot write file:", filePath)
+		}
+	}
+}
+
+func main() {
+	log.SetFlags(0)
+
+	flag.Parse()
+
+	args := flag.Args()
+
+	if len(args) >= 1 {
+		switch args[0] {
+		case "init":
+			Init()
+		default:
+			log.Fatalln("invalid sub command")
+		}
+	}
 }
