@@ -65,7 +65,7 @@ func main() {
 		case "init":
 			Init()
 		default:
-			log.Fatalln("invalid sub command")
+			l.Fatalln("invalid sub command")
 		}
 	}
 }
