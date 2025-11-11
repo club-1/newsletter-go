@@ -37,7 +37,12 @@ func SubscribeConfirm() {
 }
 
 func Unsubscribe() {
-	log.Println("recieved mail to route 'unsubscribe'")
+	err := newsletter.Conf.Unsubscribe(fromAddr)
+	if err != nil {
+		log.Printf(logMessage+": %v", err)
+	} else {
+		log.Printf(logMessage + ": successfully unsubscribed")
+	}
 }
 
 func Send() {
@@ -74,12 +79,7 @@ func main() {
 	logFile := initLogger()
 	defer logFile.Close()
 
-	err := newsletter.ReadConfig()
-	if err != nil {
-		log.Fatalf("init: %v", err)
-	}
-
-	incomingEmail, err = letters.ParseEmail(os.Stdin)
+	incomingEmail, err := letters.ParseEmail(os.Stdin)
 	if err != nil {
 		log.Fatalf("error while parsing input email: %v", err)
 	}
@@ -95,6 +95,11 @@ func main() {
 
 	if len(incomingEmail.Headers.From) == 0 {
 		log.Fatalf(logMessage + " without From header")
+	}
+
+	err = newsletter.ReadConfig()
+	if err != nil {
+		log.Fatalf("init: %v", err)
 	}
 
 	fromAddr = incomingEmail.Headers.From[0].Address

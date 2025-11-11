@@ -9,6 +9,8 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 )
 
 const (
@@ -20,6 +22,7 @@ const (
 
 var (
 	Conf       *Config
+	HomeDir    string
 	ConfigPath string = ".config/newsletter"
 )
 
@@ -33,6 +36,29 @@ type Config struct {
 	Secret    string
 	Signature string
 	Settings  Settings
+}
+
+func (c *Config) Unsubscribe(addr string) error {
+	index := slices.Index(c.Emails, addr)
+	if index == -1 {
+		return fmt.Errorf("not subscribed")
+	}
+	c.Emails = append(c.Emails[:index], c.Emails[index+1:]...)
+	return c.saveEmails()
+}
+
+func (c *Config) Subscribe(addr string) error {
+	c.Emails = append(c.Emails, addr)
+	return c.saveEmails()
+}
+
+func (c *Config) saveEmails() error {
+	emailsFilePath := filepath.Join(HomeDir, ConfigPath, EmailsFile)
+	err := writeLines(c.Emails, emailsFilePath)
+	if err != nil {
+		return fmt.Errorf("could not save emails: %w", err)
+	}
+	return nil
 }
 
 // readLines reads a whole file into memory
@@ -53,19 +79,14 @@ func readLines(path string) ([]string, error) {
 }
 
 // writeLines writes the lines to the given file.
-// func writeLines(lines []string, path string) error {
-// 	file, err := os.Create(path)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	defer file.Close()
-
-// 	w := bufio.NewWriter(file)
-// 	for _, line := range lines {
-// 		fmt.Fprintln(w, line)
-// 	}
-// 	return w.Flush()
-// }
+func writeLines(lines []string, path string) error {
+	content := strings.Join(lines, "\n")
+	err := os.WriteFile(path, []byte(content+"\n"), 0664)
+	if err != nil {
+		return fmt.Errorf("write file error: %w", err)
+	}
+	return nil
+}
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
 
@@ -79,19 +100,20 @@ func randStringRunes(n int) string {
 
 // Load config in newsletter.Conf struct
 func ReadConfig() error {
-	homeDir, err := os.UserHomeDir()
+	var err error
+	HomeDir, err = os.UserHomeDir()
 	if err != nil {
 		return fmt.Errorf("could not get user's home: %w", err)
 	}
 
-	configDir := filepath.Join(homeDir, ConfigPath)
+	configDir := filepath.Join(HomeDir, ConfigPath)
 	err = os.MkdirAll(configDir, 0775)
 	if err != nil {
 		return fmt.Errorf("could not init config directory: %w", err)
 	}
 
 	var emails []string
-	emailsFilePath := filepath.Join(homeDir, ConfigPath, EmailsFile)
+	emailsFilePath := filepath.Join(HomeDir, ConfigPath, EmailsFile)
 	_, err = os.Stat(emailsFilePath)
 	if errors.Is(err, os.ErrNotExist) {
 		emails = []string{}
@@ -103,7 +125,7 @@ func ReadConfig() error {
 	}
 
 	var signature string
-	signatureFilePath := filepath.Join(homeDir, ConfigPath, SignatureFile)
+	signatureFilePath := filepath.Join(HomeDir, ConfigPath, SignatureFile)
 	_, err = os.Stat(signatureFilePath)
 	if errors.Is(err, os.ErrNotExist) {
 		signature = ""
@@ -116,7 +138,7 @@ func ReadConfig() error {
 	}
 
 	var secret string
-	secretFilePath := filepath.Join(homeDir, ConfigPath, SecretFile)
+	secretFilePath := filepath.Join(HomeDir, ConfigPath, SecretFile)
 	_, err = os.Stat(secretFilePath)
 	if errors.Is(err, os.ErrNotExist) {
 		secret = randStringRunes(40)
@@ -134,7 +156,7 @@ func ReadConfig() error {
 	}
 
 	var settings Settings
-	settingsFilePath := filepath.Join(homeDir, ConfigPath, SettingsFile)
+	settingsFilePath := filepath.Join(HomeDir, ConfigPath, SettingsFile)
 	_, err = os.Stat(settingsFilePath)
 	if errors.Is(err, os.ErrNotExist) {
 		settings = Settings{}
