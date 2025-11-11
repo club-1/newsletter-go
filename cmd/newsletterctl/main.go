@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+
+	"github.com/club-1/newsletter-go"
 )
 
 const Name = "newsletterctl"
@@ -55,8 +57,13 @@ func initLogger() *os.File {
 func main() {
 	logFile := initLogger()
 	defer logFile.Close()
-	flag.Parse()
 
+	err := newsletter.ReadConfig()
+	if err != nil {
+		log.Printf("init: %v", err)
+	}
+
+	flag.Parse()
 	args := flag.Args()
 
 	if len(args) >= 1 {

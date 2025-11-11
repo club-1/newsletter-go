@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+
+	"github.com/club-1/newsletter-go"
 )
 
 const Name = "newsletter"
@@ -55,6 +57,11 @@ func Init() {
 func main() {
 	log.SetFlags(0)
 	flag.BoolVar(&verbose, "v", false, "increase verbosity of program")
+
+	err := newsletter.ReadConfig()
+	if err != nil {
+		log.Printf("init: %v", err)
+	}
 
 	flag.Parse()
 
