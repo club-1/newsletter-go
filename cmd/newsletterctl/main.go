@@ -2,18 +2,34 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"github.com/club-1/newsletter-go"
+
+	"github.com/mnako/letters"
 )
 
 const Name = "newsletterctl"
 
+var (
+	incomingEmail letters.Email
+	logMessage    string
+	fromAddr      string
+)
+
 func Subscribe() {
-	log.Println("recieved mail to route 'subscribe'")
+	if slices.Contains(newsletter.Conf.Emails, fromAddr) {
+		log.Printf(logMessage + ": already subscribed")
+		// send email
+	} else {
+		log.Printf(logMessage + ": unsubscribed")
+		log.Printf("subscription confirmation mail sent to %q", fromAddr)
+	}
 }
 
 func SubscribeConfirm() {
@@ -60,26 +76,42 @@ func main() {
 
 	err := newsletter.ReadConfig()
 	if err != nil {
-		log.Printf("init: %v", err)
+		log.Fatalf("init: %v", err)
+	}
+
+	incomingEmail, err = letters.ParseEmail(os.Stdin)
+	if err != nil {
+		log.Fatalf("error while parsing input email: %v", err)
 	}
 
 	flag.Parse()
 	args := flag.Args()
 
-	if len(args) >= 1 {
-		switch args[0] {
-		case "subscribe":
-			Subscribe()
-		case "subscribe-confirm":
-			SubscribeConfirm()
-		case "unsubscribe":
-			Unsubscribe()
-		case "send":
-			Send()
-		case "send-confirm":
-			SendConfirm()
-		default:
-			log.Fatalln("invalid sub command:", args[0])
-		}
+	if len(args) < 1 {
+		log.Fatal("missing sub command")
+	}
+
+	logMessage += fmt.Sprintf("recieved mail to route %q", args[0])
+
+	if len(incomingEmail.Headers.From) == 0 {
+		log.Fatalf(logMessage + " without From header")
+	}
+
+	fromAddr = incomingEmail.Headers.From[0].Address
+	logMessage += fmt.Sprintf(" from %q", fromAddr)
+
+	switch args[0] {
+	case "subscribe":
+		Subscribe()
+	case "subscribe-confirm":
+		SubscribeConfirm()
+	case "unsubscribe":
+		Unsubscribe()
+	case "send":
+		Send()
+	case "send-confirm":
+		SendConfirm()
+	default:
+		log.Fatalf("invalid sub command: %q", args[0])
 	}
 }
