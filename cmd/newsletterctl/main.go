@@ -16,16 +16,38 @@ import (
 
 const Name = "newsletterctl"
 
+const (
+	RouteSubscribe        = "subscribe"
+	RouteSubscribeConfirm = "subscribe-confirm"
+	RouteUnSubscribe      = "unsubscribe"
+	RouteSend             = "send"
+	RouteSendConfirm      = "send-confirm"
+)
+
 var (
 	incomingEmail letters.Email
 	logMessage    string
 	fromAddr      string
 )
 
+func response(subject string, body string) *newsletter.Mail {
+	return &newsletter.Mail{
+		To:        fromAddr,
+		FromAddr:  newsletter.LocalUser + "@" + newsletter.LocalServer,
+		FromName:  newsletter.Conf.Settings.DisplayName,
+		Subject:   "[" + newsletter.Conf.Settings.DisplayName + "] " + subject,
+		Body:      body + "--\n" + newsletter.Conf.Signature,
+		InReplyTo: string(incomingEmail.Headers.MessageID),
+	}
+}
+
 func Subscribe() {
 	if slices.Contains(newsletter.Conf.Emails, fromAddr) {
 		log.Printf(logMessage + ": already subscribed")
-		// send email
+		postmaster := newsletter.Brackets(newsletter.PostmasterAddr())
+		mail := response("already subscribed", "your email is already subscribed, if problem persist, contact "+postmaster)
+		newsletter.SendMail(mail)
+		log.Printf("subscription state info mail sent to %q", fromAddr)
 	} else {
 		log.Printf(logMessage + ": unsubscribed")
 		log.Printf("subscription confirmation mail sent to %q", fromAddr)
@@ -106,15 +128,15 @@ func main() {
 	logMessage += fmt.Sprintf(" from %q", fromAddr)
 
 	switch args[0] {
-	case "subscribe":
+	case RouteSubscribe:
 		Subscribe()
-	case "subscribe-confirm":
+	case RouteSubscribeConfirm:
 		SubscribeConfirm()
-	case "unsubscribe":
+	case RouteUnSubscribe:
 		Unsubscribe()
-	case "send":
+	case RouteSend:
 		Send()
-	case "send-confirm":
+	case RouteSendConfirm:
 		SendConfirm()
 	default:
 		log.Fatalf("invalid sub command: %q", args[0])

@@ -8,6 +8,10 @@ import (
 	"strings"
 )
 
+const LocalServer = "club1.fr"
+
+var LocalUser string
+
 type Mail struct {
 	FromAddr  string
 	FromName  string
@@ -21,6 +25,14 @@ type Mail struct {
 
 func (m *Mail) From() string {
 	return m.FromName + " <" + m.FromAddr + ">"
+}
+
+func PostmasterAddr() string {
+	return "postmaster@" + LocalServer
+}
+
+func Brackets(addr string) string {
+	return "<" + addr + ">"
 }
 
 func quotedPrintable(s string) (string, error) {
@@ -48,7 +60,9 @@ func SendMail(mail *Mail) error {
 		"-r", mail.From(),
 		"-a", "Content-Transfer-Encoding: quoted-printable",
 		"-a", "Content-Type: text/plain; charset=UTF-8",
-		"-a", "Message-Id: " + mail.Id,
+	}
+	if mail.Id != "" {
+		args = append(args, "-a", "Message-Id: "+mail.Id)
 	}
 	if mail.InReplyTo != "" {
 		args = append(args, "-a", "In-Reply-To: "+mail.InReplyTo)
