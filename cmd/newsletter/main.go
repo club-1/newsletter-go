@@ -28,7 +28,7 @@ func getPrefix() (string, error) {
 	return filepath.Dir(filepath.Dir(realpath)), nil
 }
 
-func PrintPreview(mail *newsletter.Mail) {
+func printPreview(mail *newsletter.Mail) {
 	fmt.Print("================ PREVIEW START ================\n")
 	fmt.Print("┌---- Header ------\n")
 	fmt.Printf("| Subject: %s\n", mail.Subject)
@@ -65,6 +65,32 @@ func Init() {
 	}
 }
 
+func Preview(args []string) {
+	if len(args) < 2 {
+		log.Fatalf("missing arguments")
+	}
+	if len(args) > 2 {
+		log.Fatalf("too many arguments")
+	}
+	subject := args[0]
+	bodyPath := args[1]
+	bodyB, err := os.ReadFile(bodyPath)
+	if err != nil {
+		log.Fatalf("could not load newsletter body: %v", err)
+	}
+
+	to := newsletter.LocalUser + "@" + newsletter.LocalServer
+	mail := newsletter.DefaultMail(subject, string(bodyB))
+	mail.To = to
+	mail.Subject += " (preview)"
+
+	err = newsletter.SendMail(mail)
+	if err != nil {
+		log.Fatalf("could not send preview mail: %v", err)
+	}
+	log.Printf("preview email send to %s", to)
+}
+
 func Send(args []string) {
 	if len(args) < 2 {
 		log.Fatalf("missing arguments")
@@ -76,10 +102,10 @@ func Send(args []string) {
 	bodyPath := args[1]
 	bodyB, err := os.ReadFile(bodyPath)
 	if err != nil {
-		log.Fatalf("could not load newsletter body: %w", err)
+		log.Fatalf("could not load newsletter body: %v", err)
 	}
 	mail := newsletter.DefaultMail(subject, string(bodyB))
-	PrintPreview(mail)
+	printPreview(mail)
 
 	fmt.Printf("\nDo you really want to send this to %v email addresses ?\n", len(newsletter.Conf.Emails))
 }
@@ -109,6 +135,8 @@ func main() {
 			Init()
 		case "send":
 			Send(args[1:])
+		case "preview":
+			Preview(args[1:])
 		default:
 			l.Fatalln("invalid sub command")
 		}
