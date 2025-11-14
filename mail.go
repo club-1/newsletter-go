@@ -32,6 +32,10 @@ func PostmasterAddr() string {
 	return "postmaster@" + LocalServer
 }
 
+func UnsubscribeAddr() string {
+	return LocalUser + "+" + RouteUnSubscribe + "@" + LocalServer
+}
+
 func Brackets(addr string) string {
 	return "<" + addr + ">"
 }
@@ -63,6 +67,7 @@ func SendMail(mail *Mail) error {
 	args := []string{
 		"-s", mail.Subject,
 		"-r", mail.From(),
+		"-a", fmt.Sprintf("List-Unsubscribe: <mailto:%s>", UnsubscribeAddr()),
 		"-a", "Content-Transfer-Encoding: quoted-printable",
 		"-a", "Content-Type: text/plain; charset=UTF-8",
 	}

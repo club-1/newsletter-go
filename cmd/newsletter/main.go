@@ -82,11 +82,10 @@ func Preview(args []string) {
 	}
 
 	to := newsletter.LocalUser + "@" + newsletter.LocalServer
-	unsubscribeAdress := newsletter.LocalUser + "+" + newsletter.RouteUnSubscribe + "@" + newsletter.LocalServer
 
 	mail := newsletter.DefaultMail(subject, string(bodyB))
 
-	mail.Body += fmt.Sprintf("\n\nTo unsubscribe, send a mail to <%s>", unsubscribeAdress)
+	mail.Body += fmt.Sprintf("\n\nTo unsubscribe, send a mail to <%s>", newsletter.UnsubscribeAddr())
 	mail.To = to
 	mail.Subject += " (preview)"
 
@@ -111,9 +110,7 @@ func Send(args []string) {
 		log.Fatalf("could not load newsletter body: %v", err)
 	}
 	mail := newsletter.DefaultMail(subject, string(bodyB))
-
-	unsubscribeAdress := newsletter.LocalUser + "+" + newsletter.RouteUnSubscribe + "@" + newsletter.LocalServer
-	mail.Body += fmt.Sprintf("\n\nTo unsubscribe, send a mail to <%s>", unsubscribeAdress)
+	mail.Body += fmt.Sprintf("\n\nTo unsubscribe, send a mail to <%s>", newsletter.UnsubscribeAddr())
 
 	printPreview(mail)
 
