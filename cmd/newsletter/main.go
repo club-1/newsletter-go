@@ -8,6 +8,7 @@ import (
 	"os/user"
 	"path/filepath"
 
+	"github.com/charmbracelet/huh"
 	"github.com/club-1/newsletter-go"
 )
 
@@ -107,7 +108,18 @@ func Send(args []string) {
 	mail := newsletter.DefaultMail(subject, string(bodyB))
 	printPreview(mail)
 
-	fmt.Printf("\nDo you really want to send this to %v email addresses ?\n", len(newsletter.Conf.Emails))
+	var confirm bool
+	confirmForm := huh.NewForm(
+		huh.NewGroup(
+			huh.NewConfirm().
+				Title(fmt.Sprintf("Do you really want to send this to %v email addresses ?\n", len(newsletter.Conf.Emails))).
+				Description("this will take a few seconds").
+				Value(&confirm),
+		),
+	)
+	if err := confirmForm.Run(); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func main() {
