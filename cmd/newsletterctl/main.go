@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/user"
 	"path/filepath"
 	"slices"
 
@@ -31,13 +32,23 @@ var (
 )
 
 func response(subject string, body string) *newsletter.Mail {
+	if newsletter.Conf.Settings.Title != "" {
+		subject = "[" + newsletter.Conf.Settings.Title + "] " + subject
+	}
+
+	if newsletter.Conf.Signature != "" {
+		body = body + "\n\n-- \n" + newsletter.Conf.Signature
+	}
+
+	messageId := incomingEmail.Headers.MessageID
+
 	return &newsletter.Mail{
 		To:        fromAddr,
 		FromAddr:  newsletter.LocalUser + "@" + newsletter.LocalServer,
 		FromName:  newsletter.Conf.Settings.DisplayName,
-		Subject:   "[" + newsletter.Conf.Settings.DisplayName + "] " + subject,
-		Body:      body + "--\n" + newsletter.Conf.Signature,
-		InReplyTo: string(incomingEmail.Headers.MessageID),
+		Subject:   subject,
+		Body:      body,
+		InReplyTo: "<" + string(messageId) + ">",
 	}
 }
 
@@ -101,7 +112,13 @@ func main() {
 	logFile := initLogger()
 	defer logFile.Close()
 
-	incomingEmail, err := letters.ParseEmail(os.Stdin)
+	user, err := user.Current()
+	if err != nil {
+		log.Fatalf("could not get local user: %v", err)
+	}
+	newsletter.LocalUser = user.Username
+
+	incomingEmail, err = letters.ParseEmail(os.Stdin)
 	if err != nil {
 		log.Fatalf("error while parsing input email: %v", err)
 	}
