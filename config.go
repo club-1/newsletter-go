@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/user"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -104,8 +105,14 @@ func randString() string {
 }
 
 // Load config in newsletter.Conf struct
+// also get username
 func ReadConfig() error {
-	var err error
+	user, err := user.Current()
+	if err != nil {
+		return fmt.Errorf("could not get local user: %w", err)
+	}
+	LocalUser = user.Username
+
 	HomeDir, err = os.UserHomeDir()
 	if err != nil {
 		return fmt.Errorf("could not get user's home: %w", err)

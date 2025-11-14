@@ -2,6 +2,8 @@ package newsletter
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/base32"
 	"fmt"
 	"mime/quotedprintable"
 	"os/exec"
@@ -34,6 +36,21 @@ func PostmasterAddr() string {
 
 func UnsubscribeAddr() string {
 	return LocalUser + "+" + RouteUnSubscribe + "@" + LocalServer
+}
+
+func SubscribeConfirmAddr() string {
+	return LocalUser + "+" + RouteSubscribeConfirm + "@" + LocalServer
+}
+
+func hashString(s string) string {
+	sum := sha256.Sum256([]byte(s))
+	return base32.StdEncoding.EncodeToString(sum[0:32])
+}
+
+// generate a Message-ID
+// it's based on incoming mail From address and local .secret file content
+func GenerateId(fromAddr string) string {
+	return LocalUser + "-" + hashString(Conf.Secret+fromAddr) + "@" + LocalServer
 }
 
 func Brackets(addr string) string {

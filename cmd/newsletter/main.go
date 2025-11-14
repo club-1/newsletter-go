@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/user"
 	"path/filepath"
 	"time"
 
@@ -156,13 +155,7 @@ func main() {
 	log.SetFlags(0)
 	flag.BoolVar(&verbose, "v", false, "increase verbosity of program")
 
-	user, err := user.Current()
-	if err != nil {
-		log.Fatalf("could not get local user: %v", err)
-	}
-	newsletter.LocalUser = user.Username
-
-	err = newsletter.ReadConfig()
+	err := newsletter.ReadConfig()
 	if err != nil {
 		log.Printf("init: %v", err)
 	}

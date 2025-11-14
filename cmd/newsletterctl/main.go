@@ -1,14 +1,11 @@
 package main
 
 import (
-	"crypto/sha256"
-	"encoding/base32"
 	"flag"
 	"fmt"
 	"io"
 	"log"
 	"os"
-	"os/user"
 	"path/filepath"
 	"slices"
 
@@ -24,17 +21,6 @@ var (
 	logMessage    string
 	fromAddr      string
 )
-
-func hashString(s string) string {
-	sum := sha256.Sum256([]byte(s))
-	return base32.StdEncoding.EncodeToString(sum[0:32])
-}
-
-// generate a Message-ID
-// it's based on incoming mail From address and local .secret file content
-func generateId() string {
-	return newsletter.LocalUser + "-" + hashString(newsletter.Conf.Secret+fromAddr) + "@" + newsletter.LocalServer
-}
 
 // base response mail directed toward recieved From address
 func response(subject string, body string) *newsletter.Mail {
@@ -61,13 +47,13 @@ func sendResponse(subject string, body string) {
 func Subscribe() {
 	if slices.Contains(newsletter.Conf.Emails, fromAddr) {
 		log.Printf(logMessage + ": already subscribed")
-		postmaster := newsletter.Brackets(newsletter.PostmasterAddr())
+		postmaster := fmt.Sprintf("<%s>", newsletter.PostmasterAddr())
 		sendResponse("already subscribed", "your email is already subscribed, if problem persist, contact "+postmaster)
 	} else {
 		log.Printf(logMessage + ": unsubscribed")
 		mail := response("confirm your subsciption", "Reply to this email to confirm that you want to subscribe to "+newsletter.Conf.Settings.Title)
-		mail.ReplyTo = newsletter.LocalUser + "+" + newsletter.RouteSubscribeConfirm + "@" + newsletter.LocalServer
-		mail.Id = newsletter.Brackets(generateId())
+		mail.ReplyTo = newsletter.SubscribeConfirmAddr()
+		mail.Id = fmt.Sprintf("<%s>", newsletter.GenerateId(fromAddr))
 		newsletter.SendMail(mail)
 		log.Printf("subscription confirmation mail sent to %q", fromAddr)
 	}
@@ -80,7 +66,7 @@ func SubscribeConfirm() {
 		sendResponse("already subscribed", "your email is already subscribed, if problem persist, contact "+postmaster)
 	} else {
 		messageId := string(incomingEmail.Headers.InReplyTo[0])
-		if messageId == generateId() {
+		if messageId == newsletter.GenerateId(fromAddr) {
 			log.Printf(logMessage + ": hash verification success")
 			err := newsletter.Conf.Subscribe(fromAddr)
 			if err != nil {
@@ -140,12 +126,7 @@ func main() {
 	logFile := initLogger()
 	defer logFile.Close()
 
-	user, err := user.Current()
-	if err != nil {
-		log.Fatalf("could not get local user: %v", err)
-	}
-	newsletter.LocalUser = user.Username
-
+	var err error // IMPORTANT: cannot use `:=` beccause it need to setup global var `incomingEmail`
 	incomingEmail, err = letters.ParseEmail(os.Stdin)
 	if err != nil {
 		log.Fatalf("error while parsing input email: %v", err)
