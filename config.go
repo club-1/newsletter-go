@@ -2,11 +2,12 @@ package newsletter
 
 import (
 	"bufio"
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
-	"math/rand"
 	"os"
 	"path/filepath"
 	"slices"
@@ -88,14 +89,12 @@ func writeLines(lines []string, path string) error {
 	return nil
 }
 
-var letterRunes = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
-
-func randStringRunes(n int) string {
-	b := make([]rune, n)
-	for i := range b {
-		b[i] = letterRunes[rand.Intn(len(letterRunes))]
-	}
-	return string(b)
+func randString() string {
+	key := make([]byte, 32)
+	rand.Read(key)
+	dst := make([]byte, base64.StdEncoding.EncodedLen(len(key)))
+	base64.StdEncoding.Encode(dst, key)
+	return string(dst)
 }
 
 // Load config in newsletter.Conf struct
@@ -141,7 +140,7 @@ func ReadConfig() error {
 	secretFilePath := filepath.Join(HomeDir, ConfigPath, SecretFile)
 	_, err = os.Stat(secretFilePath)
 	if errors.Is(err, os.ErrNotExist) {
-		secret = randStringRunes(40)
+		secret = randString()
 		err := os.WriteFile(secretFilePath, []byte(secret+"\n"), 0660)
 		if err != nil {
 			return fmt.Errorf("could not store generated secret: %w", err)
