@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"time"
 
 	"github.com/charmbracelet/huh"
 	"github.com/club-1/newsletter-go"
@@ -108,17 +109,41 @@ func Send(args []string) {
 	mail := newsletter.DefaultMail(subject, string(bodyB))
 	printPreview(mail)
 
+	addrCount := len(newsletter.Conf.Emails)
+	duration := float32(addrCount) / 5.0
+
 	var confirm bool
 	confirmForm := huh.NewForm(
 		huh.NewGroup(
 			huh.NewConfirm().
-				Title(fmt.Sprintf("Do you really want to send this to %v email addresses ?\n", len(newsletter.Conf.Emails))).
-				Description("this will take a few seconds").
+				Title(fmt.Sprintf("Do you really want to send this to %v email addresses ?\n", addrCount)).
+				Description(fmt.Sprintf("this will take %v seconds", duration)).
 				Value(&confirm),
 		),
 	)
 	if err := confirmForm.Run(); err != nil {
 		log.Fatal(err)
+	}
+	if !confirm {
+		os.Exit(2)
+	}
+
+	fmt.Print("sending")
+	var errCount = 0
+	for _, address := range newsletter.Conf.Emails {
+		mail.To = address
+		err := newsletter.SendMail(mail)
+		if err != nil {
+			errCount++
+			fmt.Print("x")
+		} else {
+			fmt.Print("·")
+		}
+		time.Sleep(1 * time.Second)
+	}
+	fmt.Printf("done !\n")
+	if errCount > 0 {
+		log.Printf("error occured while sending mail to %v addresses", errCount)
 	}
 }
 

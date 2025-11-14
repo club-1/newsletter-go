@@ -6,6 +6,7 @@ import (
 	"mime/quotedprintable"
 	"os/exec"
 	"strings"
+	"time"
 )
 
 const LocalServer = "club1.fr"
@@ -106,8 +107,7 @@ func DefaultMail(subject string, body string) *Mail {
 }
 
 // send the newsletter to all the subscribed addresses
-func SendNews(subject string, body string) error {
-	mail := DefaultMail(subject, body)
+func SendNews(mail *Mail) error {
 	var errCount = 0
 	for _, address := range Conf.Emails {
 		mail.To = address
@@ -115,6 +115,7 @@ func SendNews(subject string, body string) error {
 		if err != nil {
 			errCount++
 		}
+		time.Sleep(200 * time.Millisecond)
 	}
 	if errCount > 0 {
 		return fmt.Errorf("error occured while sending mail to %v addresses", errCount)
