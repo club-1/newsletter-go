@@ -10,6 +10,9 @@ Usage
 
 Initialize newsletter
 
+    newsletter send SUBJECT CONTENT_FILE
+
+Send a newsletter to subscribed addresses
 
 Deployment
 ----------
