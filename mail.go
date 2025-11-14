@@ -50,6 +50,10 @@ func quotedPrintable(s string) (string, error) {
 }
 
 func SendMail(mail *Mail) error {
+	if mail.To == "" {
+		return fmt.Errorf("no recipient address found")
+	}
+
 	encodedBody, err := quotedPrintable(mail.Body)
 	if err != nil {
 		return fmt.Errorf("could not encode body: %w", err)
