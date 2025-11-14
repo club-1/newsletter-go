@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/base32"
 	"flag"
 	"fmt"
 	"io"
@@ -31,6 +33,18 @@ var (
 	fromAddr      string
 )
 
+func hashString(s string) string {
+	sum := sha256.Sum256([]byte(s))
+	return base32.StdEncoding.EncodeToString(sum[0:32])
+}
+
+// generate a Message-ID
+// it's based on incoming mail From address and local .secret file content
+func generateId() string {
+	return newsletter.LocalUser + "-" + hashString(newsletter.Conf.Secret+fromAddr) + "@" + newsletter.LocalServer
+}
+
+// pre-fill the base response mail with default values
 func response(subject string, body string) *newsletter.Mail {
 	if newsletter.Conf.Settings.Title != "" {
 		subject = "[" + newsletter.Conf.Settings.Title + "] " + subject
@@ -40,7 +54,7 @@ func response(subject string, body string) *newsletter.Mail {
 		body = body + "\n\n-- \n" + newsletter.Conf.Signature
 	}
 
-	messageId := incomingEmail.Headers.MessageID
+	messageId := string(incomingEmail.Headers.MessageID)
 
 	return &newsletter.Mail{
 		To:        fromAddr,
@@ -48,7 +62,18 @@ func response(subject string, body string) *newsletter.Mail {
 		FromName:  newsletter.Conf.Settings.DisplayName,
 		Subject:   subject,
 		Body:      body,
-		InReplyTo: "<" + string(messageId) + ">",
+		InReplyTo: newsletter.Brackets(messageId),
+	}
+}
+
+// Send standard response and log
+func sendResponse(subject string, body string) {
+	mail := response(subject, body)
+	err := newsletter.SendMail(mail)
+	if err != nil {
+		log.Printf("error while sending response mail: %v", err)
+	} else {
+		log.Printf("response mail sent to %q", fromAddr)
 	}
 }
 
@@ -56,17 +81,38 @@ func Subscribe() {
 	if slices.Contains(newsletter.Conf.Emails, fromAddr) {
 		log.Printf(logMessage + ": already subscribed")
 		postmaster := newsletter.Brackets(newsletter.PostmasterAddr())
-		mail := response("already subscribed", "your email is already subscribed, if problem persist, contact "+postmaster)
-		newsletter.SendMail(mail)
-		log.Printf("subscription state info mail sent to %q", fromAddr)
+		sendResponse("already subscribed", "your email is already subscribed, if problem persist, contact "+postmaster)
 	} else {
 		log.Printf(logMessage + ": unsubscribed")
+		mail := response("confirm your subsciption", "Reply to this email to confirm that you want to subscribe to "+newsletter.Conf.Settings.Title)
+		mail.ReplyTo = newsletter.LocalUser + "+" + RouteSubscribeConfirm + "@" + newsletter.LocalServer
+		mail.Id = newsletter.Brackets(generateId())
+		newsletter.SendMail(mail)
 		log.Printf("subscription confirmation mail sent to %q", fromAddr)
 	}
 }
 
 func SubscribeConfirm() {
-	log.Println("recieved mail to route 'subscribe-confirm'")
+	if slices.Contains(newsletter.Conf.Emails, fromAddr) {
+		log.Printf(logMessage + ": already subscribed")
+		postmaster := newsletter.Brackets(newsletter.PostmasterAddr())
+		sendResponse("already subscribed", "your email is already subscribed, if problem persist, contact "+postmaster)
+	} else {
+		messageId := string(incomingEmail.Headers.InReplyTo[0])
+		if messageId == generateId() {
+			log.Printf(logMessage + ": hash verification success")
+			err := newsletter.Conf.Subscribe(fromAddr)
+			if err != nil {
+				log.Printf("error while subscribing address: %v", err)
+			} else {
+				log.Printf("address %q has been added to subscribers", fromAddr)
+				sendResponse("subscription is successfull", "your email has been added to list "+newsletter.Conf.Settings.Title)
+			}
+		} else {
+			log.Printf(logMessage + ": hash verification failed")
+			sendResponse("an error occured", "your email cannot be added to the subscripted list, contact list owner for more infos")
+		}
+	}
 }
 
 func Unsubscribe() {
@@ -75,6 +121,7 @@ func Unsubscribe() {
 		log.Printf(logMessage+": %v", err)
 	} else {
 		log.Printf(logMessage + ": successfully unsubscribed")
+		sendResponse("successfully unsubscribed", "your email was successfully removed from the list "+newsletter.Conf.Settings.Title)
 	}
 }
 
