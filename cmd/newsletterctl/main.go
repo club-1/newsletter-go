@@ -44,26 +44,15 @@ func generateId() string {
 	return newsletter.LocalUser + "-" + hashString(newsletter.Conf.Secret+fromAddr) + "@" + newsletter.LocalServer
 }
 
-// pre-fill the base response mail with default values
+// base response mail directed toward recieved From address
 func response(subject string, body string) *newsletter.Mail {
-	if newsletter.Conf.Settings.Title != "" {
-		subject = "[" + newsletter.Conf.Settings.Title + "] " + subject
-	}
-
-	if newsletter.Conf.Signature != "" {
-		body = body + "\n\n-- \n" + newsletter.Conf.Signature
-	}
+	mail := newsletter.DefaultMail(subject, body)
 
 	messageId := string(incomingEmail.Headers.MessageID)
+	mail.InReplyTo = newsletter.Brackets(messageId)
+	mail.To = fromAddr
 
-	return &newsletter.Mail{
-		To:        fromAddr,
-		FromAddr:  newsletter.LocalUser + "@" + newsletter.LocalServer,
-		FromName:  newsletter.Conf.Settings.DisplayName,
-		Subject:   subject,
-		Body:      body,
-		InReplyTo: newsletter.Brackets(messageId),
-	}
+	return mail
 }
 
 // Send standard response and log

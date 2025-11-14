@@ -82,3 +82,21 @@ func SendMail(mail *Mail) error {
 	}
 	return nil
 }
+
+// pre-fill the base mail with default values
+func DefaultMail(subject string, body string) *Mail {
+	if Conf.Settings.Title != "" {
+		subject = "[" + Conf.Settings.Title + "] " + subject
+	}
+
+	if Conf.Signature != "" {
+		body = body + "\n\n-- \n" + Conf.Signature
+	}
+
+	return &Mail{
+		FromAddr: LocalUser + "@" + LocalServer,
+		FromName: Conf.Settings.DisplayName,
+		Subject:  subject,
+		Body:     body,
+	}
+}
