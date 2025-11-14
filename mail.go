@@ -100,3 +100,20 @@ func DefaultMail(subject string, body string) *Mail {
 		Body:     body,
 	}
 }
+
+// send the newsletter to all the subscribed addresses
+func SendNews(subject string, body string) error {
+	mail := DefaultMail(subject, body)
+	var errCount = 0
+	for _, address := range Conf.Emails {
+		mail.To = address
+		err := SendMail(mail)
+		if err != nil {
+			errCount++
+		}
+	}
+	if errCount > 0 {
+		return fmt.Errorf("error occured while sending mail to %v addresses", errCount)
+	}
+	return nil
+}
