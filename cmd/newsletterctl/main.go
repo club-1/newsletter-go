@@ -19,14 +19,6 @@ import (
 
 const Name = "newsletterctl"
 
-const (
-	RouteSubscribe        = "subscribe"
-	RouteSubscribeConfirm = "subscribe-confirm"
-	RouteUnSubscribe      = "unsubscribe"
-	RouteSend             = "send"
-	RouteSendConfirm      = "send-confirm"
-)
-
 var (
 	incomingEmail letters.Email
 	logMessage    string
@@ -74,7 +66,7 @@ func Subscribe() {
 	} else {
 		log.Printf(logMessage + ": unsubscribed")
 		mail := response("confirm your subsciption", "Reply to this email to confirm that you want to subscribe to "+newsletter.Conf.Settings.Title)
-		mail.ReplyTo = newsletter.LocalUser + "+" + RouteSubscribeConfirm + "@" + newsletter.LocalServer
+		mail.ReplyTo = newsletter.LocalUser + "+" + newsletter.RouteSubscribeConfirm + "@" + newsletter.LocalServer
 		mail.Id = newsletter.Brackets(generateId())
 		newsletter.SendMail(mail)
 		log.Printf("subscription confirmation mail sent to %q", fromAddr)
@@ -181,15 +173,15 @@ func main() {
 	logMessage += fmt.Sprintf(" from %q", fromAddr)
 
 	switch args[0] {
-	case RouteSubscribe:
+	case newsletter.RouteSubscribe:
 		Subscribe()
-	case RouteSubscribeConfirm:
+	case newsletter.RouteSubscribeConfirm:
 		SubscribeConfirm()
-	case RouteUnSubscribe:
+	case newsletter.RouteUnSubscribe:
 		Unsubscribe()
-	case RouteSend:
+	case newsletter.RouteSend:
 		Send()
-	case RouteSendConfirm:
+	case newsletter.RouteSendConfirm:
 		SendConfirm()
 	default:
 		log.Fatalf("invalid sub command: %q", args[0])

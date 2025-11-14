@@ -19,6 +19,12 @@ const (
 	SecretFile    string = ".secret"
 	SignatureFile string = "signature.txt"
 	SettingsFile  string = "settings.json"
+
+	RouteSubscribe        = "subscribe"
+	RouteSubscribeConfirm = "subscribe-confirm"
+	RouteUnSubscribe      = "unsubscribe"
+	RouteSend             = "send"
+	RouteSendConfirm      = "send-confirm"
 )
 
 var (
