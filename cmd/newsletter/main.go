@@ -12,10 +12,9 @@ import (
 	"github.com/club-1/newsletter-go"
 )
 
-const Name = "newsletter"
+const CmdName = "newsletter"
 
 var verbose bool
-var l = log.New(os.Stderr, Name+": ", 0)
 
 func getPrefix() (string, error) {
 	executable, err := os.Executable()
@@ -42,12 +41,12 @@ func printPreview(mail *newsletter.Mail) {
 func Init() {
 	prefix, err := getPrefix()
 	if err != nil {
-		l.Fatalln("cannot get prefix:", err)
+		log.Fatalln("cannot get prefix:", err)
 	}
 
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		l.Fatalln("cannot get user home directory:", err)
+		log.Fatalln("cannot get user home directory:", err)
 	}
 	routes := [5]string{"subscribe", "unsubscribe", "subscribe-confirm", "send", "send-confirm"}
 	for _, route := range routes {
@@ -61,7 +60,7 @@ func Init() {
 		content := []byte("| \"" + cmdPath + " " + route + "\"\n")
 		err := os.WriteFile(filePath, content, 0664)
 		if err != nil {
-			l.Println("cannot write file:", filePath)
+			log.Println("cannot write file:", filePath)
 		}
 	}
 }
@@ -152,14 +151,15 @@ func Send(args []string) {
 }
 
 func main() {
-	log.SetFlags(0)
-	flag.BoolVar(&verbose, "v", false, "increase verbosity of program")
+	logFile := newsletter.InitLogger(CmdName)
+	defer logFile.Close()
 
 	err := newsletter.ReadConfig()
 	if err != nil {
 		log.Printf("init: %v", err)
 	}
 
+	flag.BoolVar(&verbose, "v", false, "increase verbosity of program")
 	flag.Parse()
 
 	args := flag.Args()
@@ -173,7 +173,7 @@ func main() {
 		case "preview":
 			Preview(args[1:])
 		default:
-			l.Fatalln("invalid sub command")
+			log.Fatalln("invalid sub command")
 		}
 	}
 }

@@ -3,10 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io"
 	"log"
 	"os"
-	"path/filepath"
 	"slices"
 
 	"github.com/club-1/newsletter-go"
@@ -14,11 +12,10 @@ import (
 	"github.com/mnako/letters"
 )
 
-const Name = "newsletterctl"
+const CmdName = "newsletterctl"
 
 var (
 	incomingEmail letters.Email
-	logMessage    string
 	fromAddr      string
 )
 
@@ -109,30 +106,8 @@ func sendConfirm() {
 	log.Println("recieved mail to route 'send-confirm'")
 }
 
-func initLogger() *os.File {
-	userCacheDir, err := os.UserCacheDir()
-	if err != nil {
-		log.Fatalln("cannot get user cache directory:", err)
-	}
-
-	logDir := filepath.Join(userCacheDir, "newsletter")
-
-	err = os.MkdirAll(logDir, 0775)
-	if err != nil {
-		log.Fatalln("cannot create log folder:", err)
-	}
-	LogFilePath := filepath.Join(logDir, Name+".log")
-
-	logFile, err := os.OpenFile(LogFilePath, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0664)
-	if err != nil {
-		panic(err)
-	}
-	log.SetOutput(io.MultiWriter(os.Stdout, logFile))
-	return logFile
-}
-
 func main() {
-	logFile := initLogger()
+	logFile := newsletter.InitLogger(CmdName)
 	defer logFile.Close()
 
 	var err error // IMPORTANT: cannot use `:=` beccause it need to setup global var `incomingEmail`
@@ -153,14 +128,14 @@ func main() {
 		log.Fatal("missing sub command")
 	}
 
-	logMessage += fmt.Sprintf("recieved mail to route %q", args[0])
+	cmdErrPrefix := fmt.Sprintf("recieved mail to route %q", args[0])
 
 	if len(incomingEmail.Headers.From) == 0 {
-		log.Fatalf(logMessage + " without From header")
+		log.Fatalf(cmdErrPrefix + " without From header")
 	}
 
 	fromAddr = incomingEmail.Headers.From[0].Address
-	logMessage += fmt.Sprintf(" from %q", fromAddr)
+	cmdErrPrefix += fmt.Sprintf(" from %q", fromAddr)
 
 	var cmdErr error
 
@@ -180,6 +155,6 @@ func main() {
 	}
 
 	if cmdErr != nil {
-		log.Fatalf(logMessage+", error: %v", cmdErr)
+		log.Fatalf(cmdErrPrefix+", error: %v", cmdErr)
 	}
 }
