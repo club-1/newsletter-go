@@ -59,27 +59,32 @@ func Subscribe() {
 	}
 }
 
-func SubscribeConfirm() {
+func SubscribeConfirm() error {
 	if slices.Contains(newsletter.Conf.Emails, fromAddr) {
-		log.Printf(logMessage + ": already subscribed")
-		postmaster := newsletter.Brackets(newsletter.PostmasterAddr())
-		sendResponse("already subscribed", "your email is already subscribed, if problem persist, contact "+postmaster)
-	} else {
-		messageId := string(incomingEmail.Headers.InReplyTo[0])
-		if messageId == newsletter.GenerateId(fromAddr) {
-			log.Printf(logMessage + ": hash verification success")
-			err := newsletter.Conf.Subscribe(fromAddr)
-			if err != nil {
-				log.Printf("error while subscribing address: %v", err)
-			} else {
-				log.Printf("address %q has been added to subscribers", fromAddr)
-				sendResponse("subscription is successfull", "your email has been added to list "+newsletter.Conf.Settings.Title)
-			}
-		} else {
-			log.Printf(logMessage + ": hash verification failed")
-			sendResponse("an error occured", "your email cannot be added to the subscripted list, contact list owner for more infos")
-		}
+		sendResponse(
+			"already subscribed",
+			fmt.Sprintf("your email is already subscribed, if problem persist, contact <%s>", newsletter.PostmasterAddr()),
+		)
+		return fmt.Errorf("already subscribed")
 	}
+
+	if len(incomingEmail.Headers.InReplyTo) == 0 {
+		return fmt.Errorf("missing In-Replay-To header")
+	}
+
+	messageId := string(incomingEmail.Headers.InReplyTo[0])
+	if messageId != newsletter.GenerateId(fromAddr) {
+		sendResponse("an error occured", "your email cannot be added to the subscripted list, contact list owner for more infos")
+		return fmt.Errorf("hash verification failed")
+	}
+
+	err := newsletter.Conf.Subscribe(fromAddr)
+	if err != nil {
+		return fmt.Errorf("error while subscribing address: %v", err)
+	}
+	log.Printf("address %q has been added to subscribers", fromAddr)
+	sendResponse("subscription is successfull", "your email has been added to list "+newsletter.Conf.Settings.Title)
+	return nil
 }
 
 func Unsubscribe() {
@@ -132,6 +137,11 @@ func main() {
 		log.Fatalf("error while parsing input email: %v", err)
 	}
 
+	err = newsletter.ReadConfig()
+	if err != nil {
+		log.Fatalf("init: %v", err)
+	}
+
 	flag.Parse()
 	args := flag.Args()
 
@@ -145,19 +155,16 @@ func main() {
 		log.Fatalf(logMessage + " without From header")
 	}
 
-	err = newsletter.ReadConfig()
-	if err != nil {
-		log.Fatalf("init: %v", err)
-	}
-
 	fromAddr = incomingEmail.Headers.From[0].Address
 	logMessage += fmt.Sprintf(" from %q", fromAddr)
+
+	var cmdErr error
 
 	switch args[0] {
 	case newsletter.RouteSubscribe:
 		Subscribe()
 	case newsletter.RouteSubscribeConfirm:
-		SubscribeConfirm()
+		cmdErr = SubscribeConfirm()
 	case newsletter.RouteUnSubscribe:
 		Unsubscribe()
 	case newsletter.RouteSend:
@@ -166,5 +173,9 @@ func main() {
 		SendConfirm()
 	default:
 		log.Fatalf("invalid sub command: %q", args[0])
+	}
+
+	if cmdErr != nil {
+		log.Fatalf(logMessage+", error: %v", cmdErr)
 	}
 }
