@@ -44,22 +44,25 @@ func sendResponse(subject string, body string) {
 	}
 }
 
-func Subscribe() {
+func subscribe() error {
 	if slices.Contains(newsletter.Conf.Emails, fromAddr) {
-		log.Printf(logMessage + ": already subscribed")
-		postmaster := fmt.Sprintf("<%s>", newsletter.PostmasterAddr())
-		sendResponse("already subscribed", "your email is already subscribed, if problem persist, contact "+postmaster)
-	} else {
-		log.Printf(logMessage + ": unsubscribed")
-		mail := response("confirm your subsciption", "Reply to this email to confirm that you want to subscribe to "+newsletter.Conf.Settings.Title)
-		mail.ReplyTo = newsletter.SubscribeConfirmAddr()
-		mail.Id = fmt.Sprintf("<%s>", newsletter.GenerateId(fromAddr))
-		newsletter.SendMail(mail)
-		log.Printf("subscription confirmation mail sent to %q", fromAddr)
+		sendResponse(
+			"already subscribed",
+			fmt.Sprintf("your email is already subscribed, if problem persist, contact <%s>", newsletter.PostmasterAddr()),
+		)
+		return fmt.Errorf("already subscribed")
 	}
+
+	mail := response("confirm your subsciption", "Reply to this email to confirm that you want to subscribe to "+newsletter.Conf.Settings.Title)
+	mail.ReplyTo = newsletter.SubscribeConfirmAddr()
+	mail.Id = fmt.Sprintf("<%s>", newsletter.GenerateId(fromAddr))
+	newsletter.SendMail(mail)
+
+	log.Printf("subscription confirmation mail sent to %q", fromAddr)
+	return nil
 }
 
-func SubscribeConfirm() error {
+func subscribeConfirm() error {
 	if slices.Contains(newsletter.Conf.Emails, fromAddr) {
 		sendResponse(
 			"already subscribed",
@@ -87,21 +90,22 @@ func SubscribeConfirm() error {
 	return nil
 }
 
-func Unsubscribe() {
+func unsubscribe() error {
 	err := newsletter.Conf.Unsubscribe(fromAddr)
 	if err != nil {
-		log.Printf(logMessage+": %v", err)
-	} else {
-		log.Printf(logMessage + ": successfully unsubscribed")
-		sendResponse("successfully unsubscribed", "your email was successfully removed from the list "+newsletter.Conf.Settings.Title)
+		return fmt.Errorf("could not unsubscribe: %w", err)
 	}
+
+	log.Printf("address %q removed from subscribers", fromAddr)
+	sendResponse("successfully unsubscribed", "your email was successfully removed from the list "+newsletter.Conf.Settings.Title)
+	return nil
 }
 
-func Send() {
+func send() {
 	log.Println("recieved mail to route 'send'")
 }
 
-func SendConfirm() {
+func sendConfirm() {
 	log.Println("recieved mail to route 'send-confirm'")
 }
 
@@ -162,15 +166,15 @@ func main() {
 
 	switch args[0] {
 	case newsletter.RouteSubscribe:
-		Subscribe()
+		cmdErr = subscribe()
 	case newsletter.RouteSubscribeConfirm:
-		cmdErr = SubscribeConfirm()
+		cmdErr = subscribeConfirm()
 	case newsletter.RouteUnSubscribe:
-		Unsubscribe()
+		cmdErr = unsubscribe()
 	case newsletter.RouteSend:
-		Send()
+		send()
 	case newsletter.RouteSendConfirm:
-		SendConfirm()
+		sendConfirm()
 	default:
 		log.Fatalf("invalid sub command: %q", args[0])
 	}
