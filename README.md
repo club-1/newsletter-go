@@ -6,13 +6,18 @@ A rewrite of <https://github.com/club-1/newsletter> in Go.
 Usage
 -----
 
+**Initialize newsletter**
+
     newsletter init
 
-Initialize newsletter
+**Preview**
+
+    newsletter preview SUBJECT CONTENT_FILE
+
+**Send a newsletter to subscribed addresses**
 
     newsletter send SUBJECT CONTENT_FILE
 
-Send a newsletter to subscribed addresses
 
 Deployment
 ----------

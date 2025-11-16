@@ -22,17 +22,19 @@ const (
 	SignatureFile string = "signature.txt"
 	SettingsFile  string = "settings.json"
 
-	RouteSubscribe        = "subscribe"
-	RouteSubscribeConfirm = "subscribe-confirm"
-	RouteUnSubscribe      = "unsubscribe"
-	RouteSend             = "send"
-	RouteSendConfirm      = "send-confirm"
+	RouteSubscribe        string = "subscribe"
+	RouteSubscribeConfirm string = "subscribe-confirm"
+	RouteUnSubscribe      string = "unsubscribe"
+	RouteSend             string = "send"
+	RouteSendConfirm      string = "send-confirm"
 )
 
 var (
 	Conf       *Config
 	HomeDir    string
 	ConfigPath string = ".config/newsletter"
+
+	Routes = [...]string{RouteSubscribe, RouteSubscribeConfirm, RouteUnSubscribe, RouteSend, RouteSendConfirm}
 )
 
 type Settings struct {

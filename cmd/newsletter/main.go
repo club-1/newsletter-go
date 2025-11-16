@@ -16,7 +16,7 @@ const CmdName = "newsletter"
 
 var verbose bool
 
-func getPrefix() (string, error) {
+func getCmdPrefix() (string, error) {
 	executable, err := os.Executable()
 	if err != nil {
 		return "", fmt.Errorf("get executable path: %w", err)
@@ -38,45 +38,51 @@ func printPreview(mail *newsletter.Mail) {
 	fmt.Print("================  PREVIEW END  ================\n")
 }
 
-func Init() {
-	prefix, err := getPrefix()
+func initialize() error {
+	prefix, err := getCmdPrefix()
 	if err != nil {
-		log.Fatalln("cannot get prefix:", err)
+		return fmt.Errorf("could not get command prefix: %w", err)
 	}
 
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		log.Fatalln("cannot get user home directory:", err)
+		return fmt.Errorf("cannot get user home directory: %w", err)
 	}
-	routes := [5]string{"subscribe", "unsubscribe", "subscribe-confirm", "send", "send-confirm"}
-	for _, route := range routes {
+
+	errCount := 0
+	for _, route := range newsletter.Routes {
 		fileName := ".forward+" + route
 		filePath := filepath.Join(homeDir, fileName)
 		if verbose {
-			fmt.Println("writting file", filePath)
+			fmt.Printf("writting file %q\n", filePath)
 		}
 
 		cmdPath := filepath.Join(prefix, "sbin/newsletterctl")
 		content := []byte("| \"" + cmdPath + " " + route + "\"\n")
 		err := os.WriteFile(filePath, content, 0664)
 		if err != nil {
-			log.Println("cannot write file:", filePath)
+			log.Printf("cannot write file %q: %v", filePath, err)
+			errCount++
 		}
 	}
+	if errCount > 0 {
+		return fmt.Errorf("could not write %v files", errCount)
+	}
+	return nil
 }
 
-func Preview(args []string) {
+func preview(args []string) error {
 	if len(args) < 2 {
-		log.Fatalf("missing arguments")
+		return fmt.Errorf("missing arguments")
 	}
 	if len(args) > 2 {
-		log.Fatalf("too many arguments")
+		return fmt.Errorf("too many arguments")
 	}
 	subject := args[0]
 	bodyPath := args[1]
 	bodyB, err := os.ReadFile(bodyPath)
 	if err != nil {
-		log.Fatalf("could not load newsletter body: %v", err)
+		return fmt.Errorf("could not load newsletter body: %w", err)
 	}
 
 	to := newsletter.LocalUser + "@" + newsletter.LocalServer
@@ -89,23 +95,24 @@ func Preview(args []string) {
 
 	err = newsletter.SendMail(mail)
 	if err != nil {
-		log.Fatalf("could not send preview mail: %v", err)
+		return fmt.Errorf("could not send preview mail: %w", err)
 	}
-	log.Printf("preview email send to %s", to)
+	fmt.Printf("preview email send to %s", to)
+	return nil
 }
 
-func Send(args []string) {
+func send(args []string) error {
 	if len(args) < 2 {
-		log.Fatalf("missing arguments")
+		return fmt.Errorf("missing arguments")
 	}
 	if len(args) > 2 {
-		log.Fatalf("too many arguments")
+		return fmt.Errorf("too many arguments")
 	}
 	subject := args[0]
 	bodyPath := args[1]
 	bodyB, err := os.ReadFile(bodyPath)
 	if err != nil {
-		log.Fatalf("could not load newsletter body: %v", err)
+		return fmt.Errorf("could not load newsletter body: %w", err)
 	}
 	mail := newsletter.DefaultMail(subject, string(bodyB))
 	mail.Body += fmt.Sprintf("\n\nTo unsubscribe, send a mail to <%s>", newsletter.UnsubscribeAddr())
@@ -125,7 +132,7 @@ func Send(args []string) {
 		),
 	)
 	if err := confirmForm.Run(); err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("could not build confirm form: %w", err)
 	}
 	if !confirm {
 		os.Exit(2)
@@ -146,8 +153,9 @@ func Send(args []string) {
 	}
 	fmt.Printf("done !\n")
 	if errCount > 0 {
-		log.Printf("error occured while sending mail to %v addresses", errCount)
+		return fmt.Errorf("error occured while sending mail to %v addresses", errCount)
 	}
+	return nil
 }
 
 func main() {
@@ -164,16 +172,24 @@ func main() {
 
 	args := flag.Args()
 
-	if len(args) >= 1 {
-		switch args[0] {
-		case "init":
-			Init()
-		case "send":
-			Send(args[1:])
-		case "preview":
-			Preview(args[1:])
-		default:
-			log.Fatalln("invalid sub command")
-		}
+	if len(args) < 1 {
+		log.Fatalf("missing subcommand")
+	}
+
+	var cmdErr error
+
+	switch args[0] {
+	case "init":
+		cmdErr = initialize()
+	case "send":
+		cmdErr = send(args[1:])
+	case "preview":
+		cmdErr = preview(args[1:])
+	default:
+		log.Fatalln("invalid sub command")
+	}
+
+	if cmdErr != nil {
+		log.Fatalf("error: %v", cmdErr)
 	}
 }
