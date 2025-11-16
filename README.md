@@ -22,17 +22,15 @@ Remove `.forward` files to deactivate newsletter. Add `-v` option to increase ve
 
 If your content is stored in a file:
 
-    newsletter [-y] send SUBJECT CONTENT_FILE
+    newsletter [-y] [-p] send SUBJECT CONTENT_FILE
 
 Alteratively, you can pipe the content through STDIN:
 
-    echo CONTENT | newsletter [-y] SUBJECT
+    echo CONTENT | newsletter [-y] [-p] SUBJECT
 
-This will send you a preview mail and ask for confirmation. `-y` will skip confirmation and preview mail.
+This will send you a preview mail and ask for confirmation.`-y` will skip confirmation and preview mail.
 
-#### preview only
-
-The above command can be limited to preview by using `preview` instead of `send`.
+If `-p` is set, action is limited to preview.
 
 
 Deployment

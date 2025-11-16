@@ -18,6 +18,7 @@ const CmdName = "newsletter"
 var (
 	verbose bool
 	yes     bool
+	preview bool
 )
 
 func getCmdPrefix() (string, error) {
@@ -145,18 +146,6 @@ func stop() error {
 	return nil
 }
 
-func preview(args []string) error {
-	subject, body, err := getSubjectBody(args)
-	if err != nil {
-		return err
-	}
-
-	mail := newsletter.DefaultMail(subject, body)
-	mail.Body += fmt.Sprintf("\n\nTo unsubscribe, send a mail to <%s>", newsletter.UnsubscribeAddr())
-
-	return sendPreviewMail(mail)
-}
-
 func send(args []string) error {
 	subject, body, err := getSubjectBody(args)
 	if err != nil {
@@ -172,6 +161,10 @@ func send(args []string) error {
 		err = sendPreviewMail(mail)
 		if err != nil {
 			return err
+		}
+
+		if preview {
+			os.Exit(0)
 		}
 
 		duration := float32(addrCount) / 5.0
@@ -226,9 +219,14 @@ func main() {
 		log.Printf("init: %v", err)
 	}
 
-	flag.BoolVar(&verbose, "v", false, "increase verbosity of program")
-	flag.BoolVar(&yes, "y", false, "always answer yes when program ask for confirmation")
+	flag.BoolVar(&verbose, "v", false, "verbose: increase verbosity of program")
+	flag.BoolVar(&yes, "y", false, "yes: always answer yes when program ask for confirmation")
+	flag.BoolVar(&preview, "p", false, "preview: limit to a preview (cannot by used with -y)")
 	flag.Parse()
+
+	if yes && preview {
+		log.Fatalf("illegal combination: -y and -p connot be used at the same time")
+	}
 
 	args := flag.Args()
 
@@ -245,8 +243,6 @@ func main() {
 		cmdErr = stop()
 	case "send":
 		cmdErr = send(args[1:])
-	case "preview":
-		cmdErr = preview(args[1:])
 	default:
 		log.Fatalln("invalid sub command")
 	}
