@@ -14,7 +14,10 @@ import (
 
 const CmdName = "newsletter"
 
-var verbose bool
+var (
+	verbose bool
+	yes     bool
+)
 
 func getCmdPrefix() (string, error) {
 	executable, err := os.Executable()
@@ -120,29 +123,31 @@ func send(args []string) error {
 	mail := newsletter.DefaultMail(subject, string(bodyB))
 	mail.Body += fmt.Sprintf("\n\nTo unsubscribe, send a mail to <%s>", newsletter.UnsubscribeAddr())
 
-	err = sendPreviewMail(mail)
-	if err != nil {
-		return err
-	}
+	if !yes {
+		err = sendPreviewMail(mail)
+		if err != nil {
+			return err
+		}
 
-	addrCount := len(newsletter.Conf.Emails)
-	duration := float32(addrCount) / 5.0
+		addrCount := len(newsletter.Conf.Emails)
+		duration := float32(addrCount) / 5.0
 
-	var confirm bool
-	confirmForm := huh.NewForm(
-		huh.NewGroup(
-			huh.NewConfirm().
-				Title(fmt.Sprintf("Do you really want to send this to %v email addresses ?\n", addrCount)).
-				Description(fmt.Sprintf("this will take %v seconds", duration)).
-				Value(&confirm),
-		),
-	)
-	if err := confirmForm.Run(); err != nil {
-		return fmt.Errorf("could not build confirm form: %w", err)
-	}
-	if !confirm {
-		fmt.Printf("❌ sending aborted\n")
-		os.Exit(2)
+		var confirm bool
+		confirmForm := huh.NewForm(
+			huh.NewGroup(
+				huh.NewConfirm().
+					Title(fmt.Sprintf("Do you really want to send this to %v email addresses ?\n", addrCount)).
+					Description(fmt.Sprintf("this will take %v seconds", duration)).
+					Value(&confirm),
+			),
+		)
+		if err := confirmForm.Run(); err != nil {
+			return fmt.Errorf("could not build confirm form: %w", err)
+		}
+		if !confirm {
+			fmt.Printf("❌ sending aborted\n")
+			os.Exit(2)
+		}
 	}
 
 	fmt.Print("sending")
@@ -175,6 +180,7 @@ func main() {
 	}
 
 	flag.BoolVar(&verbose, "v", false, "increase verbosity of program")
+	flag.BoolVar(&yes, "y", false, "always answer yes when program ask for confirmation")
 	flag.Parse()
 
 	args := flag.Args()

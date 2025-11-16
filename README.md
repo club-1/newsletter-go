@@ -8,7 +8,9 @@ Usage
 
 **Initialize newsletter**
 
-    newsletter init
+    newsletter [-v] init
+
+create necessary `.forward` files. Add `-y` option to increase verbosity.
 
 **Preview**
 
@@ -16,7 +18,9 @@ Usage
 
 **Send a newsletter to subscribed addresses**
 
-    newsletter send SUBJECT CONTENT_FILE
+    newsletter [-y] send SUBJECT CONTENT_FILE
+
+This will send you a preview mail and ask for confirmation. `-y` will skip confirmation and preview mail.
 
 
 Deployment
