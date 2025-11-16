@@ -11,10 +11,6 @@ import (
 	"time"
 )
 
-const LocalServer = "club1.fr"
-
-var LocalUser string
-
 type Mail struct {
 	FromAddr  string
 	FromName  string
@@ -32,6 +28,10 @@ func (m *Mail) From() string {
 
 func PostmasterAddr() string {
 	return "postmaster@" + LocalServer
+}
+
+func LocalUserAddr() string {
+	return LocalUser + "@" + LocalServer
 }
 
 func UnsubscribeAddr() string {

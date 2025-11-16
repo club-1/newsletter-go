@@ -22,6 +22,8 @@ const (
 	SignatureFile string = "signature.txt"
 	SettingsFile  string = "settings.json"
 
+	LocalServer string = "club1.fr"
+
 	RouteSubscribe        string = "subscribe"
 	RouteSubscribeConfirm string = "subscribe-confirm"
 	RouteUnSubscribe      string = "unsubscribe"
@@ -33,6 +35,7 @@ var (
 	Conf       *Config
 	HomeDir    string
 	ConfigPath string = ".config/newsletter"
+	LocalUser  string
 
 	Routes = [...]string{RouteSubscribe, RouteSubscribeConfirm, RouteUnSubscribe, RouteSend, RouteSendConfirm}
 )

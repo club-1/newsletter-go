@@ -38,6 +38,18 @@ func printPreview(mail *newsletter.Mail) {
 	fmt.Print("================  PREVIEW END  ================\n")
 }
 
+func sendPreviewMail(mail *newsletter.Mail) error {
+	mail.To = newsletter.LocalUserAddr()
+	mail.Subject += " (preview)"
+
+	err := newsletter.SendMail(mail)
+	if err != nil {
+		return fmt.Errorf("could not send preview mail: %w", err)
+	}
+	fmt.Printf("📨 preview email send to %s\n", newsletter.LocalUserAddr())
+	return nil
+}
+
 func initialize() error {
 	prefix, err := getCmdPrefix()
 	if err != nil {
@@ -85,20 +97,10 @@ func preview(args []string) error {
 		return fmt.Errorf("could not load newsletter body: %w", err)
 	}
 
-	to := newsletter.LocalUser + "@" + newsletter.LocalServer
-
 	mail := newsletter.DefaultMail(subject, string(bodyB))
-
 	mail.Body += fmt.Sprintf("\n\nTo unsubscribe, send a mail to <%s>", newsletter.UnsubscribeAddr())
-	mail.To = to
-	mail.Subject += " (preview)"
 
-	err = newsletter.SendMail(mail)
-	if err != nil {
-		return fmt.Errorf("could not send preview mail: %w", err)
-	}
-	fmt.Printf("preview email send to %s", to)
-	return nil
+	return sendPreviewMail(mail)
 }
 
 func send(args []string) error {
@@ -114,10 +116,14 @@ func send(args []string) error {
 	if err != nil {
 		return fmt.Errorf("could not load newsletter body: %w", err)
 	}
+
 	mail := newsletter.DefaultMail(subject, string(bodyB))
 	mail.Body += fmt.Sprintf("\n\nTo unsubscribe, send a mail to <%s>", newsletter.UnsubscribeAddr())
 
-	printPreview(mail)
+	err = sendPreviewMail(mail)
+	if err != nil {
+		return err
+	}
 
 	addrCount := len(newsletter.Conf.Emails)
 	duration := float32(addrCount) / 5.0
@@ -135,6 +141,7 @@ func send(args []string) error {
 		return fmt.Errorf("could not build confirm form: %w", err)
 	}
 	if !confirm {
+		fmt.Printf("❌ sending aborted\n")
 		os.Exit(2)
 	}
 
