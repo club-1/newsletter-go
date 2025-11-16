@@ -81,7 +81,33 @@ func initialize() error {
 		}
 	}
 	if errCount > 0 {
-		return fmt.Errorf("could not write %v files", errCount)
+		return fmt.Errorf("could not write %v file(s)", errCount)
+	}
+	return nil
+}
+
+func stop() error {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("cannot get user home directory: %w", err)
+	}
+
+	errCount := 0
+	for _, route := range newsletter.Routes {
+		fileName := ".forward+" + route
+		filePath := filepath.Join(homeDir, fileName)
+		if verbose {
+			fmt.Printf("deleting file %q\n", filePath)
+		}
+
+		err := os.Remove(filePath)
+		if err != nil {
+			log.Printf("cannot delete file %q: %v", filePath, err)
+			errCount++
+		}
+	}
+	if errCount > 0 {
+		return fmt.Errorf("could not remove %v file(s)", errCount)
 	}
 	return nil
 }
@@ -194,6 +220,8 @@ func main() {
 	switch args[0] {
 	case "init":
 		cmdErr = initialize()
+	case "stop":
+		cmdErr = stop()
 	case "send":
 		cmdErr = send(args[1:])
 	case "preview":

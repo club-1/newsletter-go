@@ -10,7 +10,13 @@ Usage
 
     newsletter [-v] init
 
-create necessary `.forward` files. Add `-y` option to increase verbosity.
+Create necessary `.forward` files. Add `-v` option to increase verbosity.
+
+**Stop newsletter**
+
+    newsletter [-v] stop
+
+Remove `.forward` files to deactivate newsletter. Add `-v` option to increase verbosity.
 
 **Preview**
 
