@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -133,21 +134,45 @@ func preview(args []string) error {
 }
 
 func send(args []string) error {
-	if len(args) < 2 {
+	argsCount := len(args)
+	var bodyB []byte
+	var err error
+
+	switch {
+	case argsCount == 0:
 		return fmt.Errorf("missing arguments")
-	}
-	if len(args) > 2 {
+
+	case argsCount > 2:
 		return fmt.Errorf("too many arguments")
-	}
-	subject := args[0]
-	bodyPath := args[1]
-	bodyB, err := os.ReadFile(bodyPath)
-	if err != nil {
-		return fmt.Errorf("could not load newsletter body: %w", err)
+
+	case argsCount == 1:
+		stat, _ := os.Stdin.Stat()
+		if (stat.Mode() & os.ModeCharDevice) != 0 {
+			return fmt.Errorf("missing STDIN piped input")
+		}
+		bodyB, err = io.ReadAll(os.Stdin)
+		if err != nil {
+			return fmt.Errorf("could not read content from STDIN: %w", err)
+		}
+
+	case argsCount == 2:
+		bodyPath := args[1]
+		bodyB, err = os.ReadFile(bodyPath)
+		if err != nil {
+			return fmt.Errorf("could not load newsletter body: %w", err)
+		}
 	}
 
-	mail := newsletter.DefaultMail(subject, string(bodyB))
+	body := string(bodyB)
+	if body == "" {
+		return fmt.Errorf("content is empty")
+	}
+
+	subject := args[0]
+	mail := newsletter.DefaultMail(subject, body)
 	mail.Body += fmt.Sprintf("\n\nTo unsubscribe, send a mail to <%s>", newsletter.UnsubscribeAddr())
+
+	addrCount := len(newsletter.Conf.Emails)
 
 	if !yes {
 		err = sendPreviewMail(mail)
@@ -155,7 +180,6 @@ func send(args []string) error {
 			return err
 		}
 
-		addrCount := len(newsletter.Conf.Emails)
 		duration := float32(addrCount) / 5.0
 
 		var confirm bool
@@ -190,9 +214,12 @@ func send(args []string) error {
 		time.Sleep(1 * time.Second)
 	}
 	fmt.Printf("done !\n")
+
 	if errCount > 0 {
 		return fmt.Errorf("error occured while sending mail to %v addresses", errCount)
 	}
+
+	log.Printf("newsletter sent to %v email addresses with %v error(s)", addrCount, errCount)
 	return nil
 }
 
@@ -231,6 +258,6 @@ func main() {
 	}
 
 	if cmdErr != nil {
-		log.Fatalf("error: %v", cmdErr)
+		log.Fatalf("%s error: %v", args[0], cmdErr)
 	}
 }
