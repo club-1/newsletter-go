@@ -200,6 +200,14 @@ func ReadConfig() error {
 	_, err = os.Stat(settingsFilePath)
 	if errors.Is(err, os.ErrNotExist) {
 		settings = Settings{}
+		settingsJson, err := json.Marshal(settings)
+		if err != nil {
+			return fmt.Errorf("could not encore settings JSON: %w", err)
+		}
+		err = os.WriteFile(settingsFilePath, settingsJson, 0660)
+		if err != nil {
+			return fmt.Errorf("could not write settings: %w", err)
+		}
 	} else {
 		settingsJson, err := os.ReadFile(settingsFilePath)
 		if err != nil {
