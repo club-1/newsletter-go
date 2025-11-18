@@ -134,6 +134,39 @@ func stop() error {
 	return nil
 }
 
+func setup() error {
+	setupForm := huh.NewForm(
+		huh.NewGroup(
+			huh.NewInput().
+				Title("Newsletter title ?").
+				Description("It will be visible before the subject inside square brackets").
+				Value(&newsletter.Conf.Settings.Title),
+			huh.NewInput().
+				Title("Sender displayed name").
+				Description("Newsletter sender's name").
+				Value(&newsletter.Conf.Settings.DisplayName),
+		),
+		huh.NewGroup(
+			huh.NewText().
+				Title("Signature").
+				Description("newsletter's signature will be inserted under each newsletter").
+				Value(&newsletter.Conf.Signature),
+		),
+	)
+	if err := setupForm.Run(); err != nil {
+		return fmt.Errorf("could not build setup form: %w", err)
+	}
+	err := newsletter.Conf.SaveSettings()
+	if err != nil {
+		return err
+	}
+	err = newsletter.Conf.SaveSignature()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func send(args []string) error {
 	subject, body, err := getSubjectBody(args)
 	if err != nil {
@@ -229,6 +262,8 @@ func main() {
 		cmdErr = initialize()
 	case "stop":
 		cmdErr = stop()
+	case "setup":
+		cmdErr = setup()
 	case "send":
 		cmdErr = send(args[1:])
 	default:

@@ -75,6 +75,28 @@ func (c *Config) saveEmails() error {
 	return nil
 }
 
+func (c *Config) SaveSignature() error {
+	signatureFilePath := filepath.Join(HomeDir, ConfigPath, SignatureFile)
+	err := os.WriteFile(signatureFilePath, []byte(c.Signature), 0660)
+	if err != nil {
+		return fmt.Errorf("could not save signature: %w", err)
+	}
+	return nil
+}
+
+func (c *Config) SaveSettings() error {
+	settingsFilePath := filepath.Join(HomeDir, ConfigPath, SettingsFile)
+	settingsJson, err := json.Marshal(c.Settings)
+	if err != nil {
+		return fmt.Errorf("could not encode settings JSON: %w", err)
+	}
+	err = os.WriteFile(settingsFilePath, settingsJson, 0660)
+	if err != nil {
+		return fmt.Errorf("could not write settings: %w", err)
+	}
+	return nil
+}
+
 // readLines reads a whole file into memory
 // and returns a slice of its lines.
 func readLines(path string) ([]string, error) {
@@ -202,7 +224,7 @@ func ReadConfig() error {
 		settings = Settings{}
 		settingsJson, err := json.Marshal(settings)
 		if err != nil {
-			return fmt.Errorf("could not encore settings JSON: %w", err)
+			return fmt.Errorf("could not encode settings JSON: %w", err)
 		}
 		err = os.WriteFile(settingsFilePath, settingsJson, 0660)
 		if err != nil {

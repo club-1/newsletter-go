@@ -6,19 +6,20 @@ A rewrite of <https://github.com/club-1/newsletter> in Go.
 Usage
 -----
 
-### Initialize newsletter
+### Initialize
 
     newsletter [-v] init
 
 Create necessary `.forward` files. Add `-v` option to increase verbosity.
 
-### Stop newsletter
 
-    newsletter [-v] stop
+### Setup
 
-Remove `.forward` files to deactivate newsletter. Add `-v` option to increase verbosity.
+    newsletter setup
 
-### Send a newsletter to subscribed addresses
+Interactive from to setup From display name, newsletter title, and signature.
+
+### Send newsletter
 
 If your content is stored in a file:
 
@@ -31,6 +32,13 @@ Alteratively, you can pipe the content through STDIN:
 This will send you a preview mail and ask for confirmation.`-y` will skip confirmation and preview mail.
 
 If `-p` is set, action is limited to preview.
+
+### Stop
+
+    newsletter [-v] stop
+
+Remove `.forward` files to deactivate newsletter. Add `-v` option to increase verbosity.
+
 
 
 Deployment
