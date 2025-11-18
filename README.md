@@ -1,7 +1,36 @@
 Newsletter-Go
 =============
 
-A rewrite of <https://github.com/club-1/newsletter> in Go.
+A very simple newsletter for CLUB1 server members.
+
+The design strategy of this piece of code is to take advantage of Postfix `.forward` files combined with recipient delimiter. 
+
+This is a rewrite of <https://github.com/club-1/newsletter> in Go.
+
+
+
+Features
+--------
+
+- subscription
+    - [x] users can subscribe using email
+        - [x] subscription verify sender's authenticiy by sending a confirm email
+    - [x] users can unsubscribe using email
+- newsletter sending
+    - [x] plain text only
+    - [ ] allow markdown formating
+    - [x] can be send through CLI
+    - [x] can be send through email
+    - [x] send a preview email to owner before sending confirmation
+- configuration
+    - [x] subscribeds emails are stored line by line in a plain text file
+    - [x] signature is stored as a plain text file
+    - [x] advanced config is stored in JSON file
+    - [x] interactive setup through CLI
+    - [ ] change language of mail subscribers interface (currently hardcoded in english)
+- other
+    - [x] logger
+    - [ ] store archives of newsletters
 
 Usage
 -----
@@ -17,7 +46,7 @@ Create necessary `.forward` files. Add `-v` option to increase verbosity.
 
     newsletter setup
 
-Interactive from to setup From display name, newsletter title, and signature.
+Interactive setup to edit display name, newsletter title, and signature.
 
 ### Send newsletter
 
