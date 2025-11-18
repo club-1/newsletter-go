@@ -42,15 +42,33 @@ func SubscribeConfirmAddr() string {
 	return LocalUser + "+" + RouteSubscribeConfirm + "@" + LocalServer
 }
 
+func SendConfirmAddr() string {
+	return LocalUser + "+" + RouteSendConfirm + "@" + LocalServer
+}
+
 func hashString(s string) string {
 	sum := sha256.Sum256([]byte(s))
 	return base32.StdEncoding.EncodeToString(sum[0:32])
 }
 
+func HashWithSecret(s string) string {
+	return hashString(s + Conf.Secret)
+}
+
 // generate a Message-ID
 // it's based on incoming mail From address and local .secret file content
-func GenerateId(fromAddr string) string {
-	return LocalUser + "-" + hashString(Conf.Secret+fromAddr) + "@" + LocalServer
+func GenerateId(hash string) string {
+	return LocalUser + "-" + hash + "@" + LocalServer
+}
+
+// retrive hash from message-ID using the form: `USER-HASH@SERVER`
+func GetHashFromId(messageId string) (string, error) {
+	after, prefixFound := strings.CutPrefix(messageId, LocalUser+"-")
+	before, suffixFound := strings.CutSuffix(after, "@"+LocalServer)
+	if !prefixFound || !suffixFound {
+		return "", fmt.Errorf("message ID does'nt match generated ID form")
+	}
+	return before, nil
 }
 
 func Brackets(addr string) string {
@@ -126,6 +144,19 @@ func DefaultMail(subject string, body string) *Mail {
 		Subject:  subject,
 		Body:     body,
 	}
+}
+
+// add a `(preview)` text after original subject
+func SendPreviewMail(mail *Mail) error {
+	mail.To = LocalUserAddr()
+	mail.Subject += " (preview)"
+
+	err := SendMail(mail)
+	if err != nil {
+		return fmt.Errorf("could not send preview mail: %w", err)
+	}
+	fmt.Printf("📨 preview email send to %s\n", LocalUserAddr())
+	return nil
 }
 
 // send the newsletter to all the subscribed addresses

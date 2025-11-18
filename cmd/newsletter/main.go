@@ -75,18 +75,6 @@ func printPreview(mail *newsletter.Mail) {
 	fmt.Print("================  PREVIEW END  ================\n")
 }
 
-func sendPreviewMail(mail *newsletter.Mail) error {
-	mail.To = newsletter.LocalUserAddr()
-	mail.Subject += " (preview)"
-
-	err := newsletter.SendMail(mail)
-	if err != nil {
-		return fmt.Errorf("could not send preview mail: %w", err)
-	}
-	fmt.Printf("📨 preview email send to %s\n", newsletter.LocalUserAddr())
-	return nil
-}
-
 func initialize() error {
 	prefix, err := getCmdPrefix()
 	if err != nil {
@@ -158,7 +146,7 @@ func send(args []string) error {
 	addrCount := len(newsletter.Conf.Emails)
 
 	if !yes {
-		err = sendPreviewMail(mail)
+		err = newsletter.SendPreviewMail(mail)
 		if err != nil {
 			return err
 		}

@@ -1,10 +1,12 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"slices"
 
 	"github.com/club-1/newsletter-go"
@@ -52,7 +54,7 @@ func subscribe() error {
 
 	mail := response("confirm your subsciption", "Reply to this email to confirm that you want to subscribe to "+newsletter.Conf.Settings.Title)
 	mail.ReplyTo = newsletter.SubscribeConfirmAddr()
-	mail.Id = fmt.Sprintf("<%s>", newsletter.GenerateId(fromAddr))
+	mail.Id = fmt.Sprintf("<%s>", newsletter.GenerateId(newsletter.HashWithSecret(fromAddr)))
 	newsletter.SendMail(mail)
 
 	log.Printf("subscription confirmation mail sent to %q", fromAddr)
@@ -69,11 +71,11 @@ func subscribeConfirm() error {
 	}
 
 	if len(incomingEmail.Headers.InReplyTo) == 0 {
-		return fmt.Errorf("missing In-Replay-To header")
+		return fmt.Errorf("missing In-Reply-To header")
 	}
 
 	messageId := string(incomingEmail.Headers.InReplyTo[0])
-	if messageId != newsletter.GenerateId(fromAddr) {
+	if messageId != newsletter.GenerateId(newsletter.HashWithSecret(fromAddr)) {
 		sendResponse("an error occured", "your email cannot be added to the subscripted list, contact list owner for more infos")
 		return fmt.Errorf("hash verification failed")
 	}
@@ -98,12 +100,88 @@ func unsubscribe() error {
 	return nil
 }
 
-func send() {
-	log.Println("recieved mail to route 'send'")
+func send() error {
+	if fromAddr != newsletter.LocalUserAddr() {
+		return fmt.Errorf("email From does'nt match user address")
+	}
+
+	body := incomingEmail.Text
+	subject := incomingEmail.Headers.Subject
+
+	hash := newsletter.HashWithSecret(body + subject)
+
+	bodyFilePath := filepath.Join(os.TempDir(), "newsletter-send-"+hash+".body.txt")
+	subjectFilePath := filepath.Join(os.TempDir(), "newsletter-send-"+hash+".subject.txt")
+
+	var err error
+	err = os.WriteFile(bodyFilePath, []byte(body), 0660)
+	if err != nil {
+		return err
+	}
+	err = os.WriteFile(subjectFilePath, []byte(subject), 0660)
+	if err != nil {
+		return err
+	}
+
+	mail := newsletter.DefaultMail(subject, body)
+	mail.Id = fmt.Sprintf("<%s>", newsletter.GenerateId(hash))
+	mail.Body += fmt.Sprintf("\n\nTo unsubscribe, send a mail to <%s>", newsletter.UnsubscribeAddr())
+	mail.Body += fmt.Sprintf("(\n\nthis is a preview mail, if you want to confirm and send the newsletter to all the %v subscribers, reply to this email)", len(newsletter.Conf.Emails))
+	mail.ReplyTo = newsletter.SendConfirmAddr()
+
+	return newsletter.SendPreviewMail(mail)
 }
 
-func sendConfirm() {
-	log.Println("recieved mail to route 'send-confirm'")
+func sendConfirm() error {
+	if fromAddr != newsletter.LocalUserAddr() {
+		return fmt.Errorf("email From header does'nt match user address")
+	}
+
+	if len(incomingEmail.Headers.InReplyTo) == 0 {
+		return fmt.Errorf("missing In-Reply-To header")
+	}
+
+	messageId := string(incomingEmail.Headers.InReplyTo[0])
+	hash, err := newsletter.GetHashFromId(messageId)
+	if err != nil {
+		return fmt.Errorf("In-Reply-To parsing error: %w", err)
+	}
+
+	bodyFilePath := filepath.Join(os.TempDir(), "newsletter-send-"+hash+".body.txt")
+	subjectFilePath := filepath.Join(os.TempDir(), "newsletter-send-"+hash+".subject.txt")
+
+	var body string
+	_, err = os.Stat(bodyFilePath)
+	if errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("hash does not match existing temporary body file")
+	} else {
+		bodyB, err := os.ReadFile(bodyFilePath)
+		if err != nil {
+			return fmt.Errorf("could read temporary body file: %w", err)
+		}
+		body = string(bodyB)
+	}
+
+	var subject string
+	_, err = os.Stat(subjectFilePath)
+	if errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("hash does not match existing temporary subject file")
+	} else {
+		subjectB, err := os.ReadFile(subjectFilePath)
+		if err != nil {
+			return fmt.Errorf("could read temporary subject file: %w", err)
+		}
+		subject = string(subjectB)
+	}
+
+	mail := newsletter.DefaultMail(subject, body)
+	mail.Body += fmt.Sprintf("\n\nTo unsubscribe, send a mail to <%s>", newsletter.UnsubscribeAddr())
+	err = newsletter.SendNews(mail)
+	if err != nil {
+		return fmt.Errorf("sending newsletter: %w", err)
+	}
+	log.Printf("newsletter successfully send to all the %v subscribers", len(newsletter.Conf.Emails))
+	return nil
 }
 
 func main() {
@@ -147,9 +225,9 @@ func main() {
 	case newsletter.RouteUnSubscribe:
 		cmdErr = unsubscribe()
 	case newsletter.RouteSend:
-		send()
+		cmdErr = send()
 	case newsletter.RouteSendConfirm:
-		sendConfirm()
+		cmdErr = sendConfirm()
 	default:
 		log.Fatalf("invalid sub command: %q", args[0])
 	}
