@@ -247,6 +247,8 @@ func main() {
 	}
 
 	if cmdErr != nil {
-		log.Fatalf(cmdErrPrefix+", error: %v", cmdErr)
+		log.Printf(cmdErrPrefix+", error: %v", cmdErr)
+		// do not send non-zero response code because otherwise
+		// it would answer an error feedback automatically by email
 	}
 }
