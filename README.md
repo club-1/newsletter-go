@@ -37,18 +37,15 @@ Features
 Usage
 -----
 
-### Initialize
-
-    newsletter [-v] init
-
-Create necessary `.forward` files. Add `-v` option to increase verbosity.
-
-
 ### Setup
 
     newsletter setup
 
 Interactive setup to edit display name, newsletter title, language, and signature.
+
+Create necessary `.forward` files if they do not exist.
+
+Add `-v` option to increase verbosity.
 
 ### Send newsletter
 

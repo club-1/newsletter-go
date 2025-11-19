@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -75,7 +76,7 @@ func printPreview(mail *newsletter.Mail) {
 	fmt.Print("================  PREVIEW END  ================\n")
 }
 
-func initialize() error {
+func initForwardFiles() error {
 	prefix, err := getCmdPrefix()
 	if err != nil {
 		return fmt.Errorf("could not get command prefix: %w", err)
@@ -90,16 +91,19 @@ func initialize() error {
 	for _, route := range newsletter.Routes {
 		fileName := ".forward+" + route
 		filePath := filepath.Join(homeDir, fileName)
-		if verbose {
-			fmt.Printf("writting file %q\n", filePath)
-		}
+		_, err = os.Stat(filePath)
+		if errors.Is(err, os.ErrNotExist) {
+			if verbose {
+				fmt.Printf("writting file %q\n", filePath)
+			}
 
-		cmdPath := filepath.Join(prefix, "sbin/newsletterctl")
-		content := []byte("| \"" + cmdPath + " " + route + "\"\n")
-		err := os.WriteFile(filePath, content, 0664)
-		if err != nil {
-			log.Printf("cannot write file %q: %v", filePath, err)
-			errCount++
+			cmdPath := filepath.Join(prefix, "sbin/newsletterctl")
+			content := []byte("| \"" + cmdPath + " " + route + "\"\n")
+			err := os.WriteFile(filePath, content, 0664)
+			if err != nil {
+				log.Printf("cannot write file %q: %v", filePath, err)
+				errCount++
+			}
 		}
 	}
 	if errCount > 0 {
@@ -135,6 +139,11 @@ func stop() error {
 }
 
 func setup() error {
+	err := initForwardFiles()
+	if err != nil {
+		return err
+	}
+
 	setupForm := huh.NewForm(
 		huh.NewGroup(
 			huh.NewInput().
@@ -166,13 +175,19 @@ func setup() error {
 	if err := setupForm.Run(); err != nil {
 		return fmt.Errorf("could not build setup form: %w", err)
 	}
-	err := newsletter.Conf.SaveSettings()
+	err = newsletter.Conf.SaveSettings()
 	if err != nil {
 		return err
+	}
+	if verbose {
+		fmt.Printf("settings sucessfully saved to file %q\n", newsletter.SettingsFile)
 	}
 	err = newsletter.Conf.SaveSignature()
 	if err != nil {
 		return err
+	}
+	if verbose {
+		fmt.Printf("signature sucessfully saved to file %q\n", newsletter.SignatureFile)
 	}
 	return nil
 }
@@ -268,8 +283,6 @@ func main() {
 	var cmdErr error
 
 	switch args[0] {
-	case "init":
-		cmdErr = initialize()
 	case "stop":
 		cmdErr = stop()
 	case "setup":
