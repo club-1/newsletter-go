@@ -54,10 +54,14 @@ func subscribe() error {
 		return fmt.Errorf("already subscribed")
 	}
 
-	mail := response(
-		Messages.ConfirmSubscription_subject.Print(),
-		Messages.ConfirmSubscription_body.Print()+newsletter.Conf.Settings.Title,
-	)
+	var responseBody string
+	if newsletter.Conf.Settings.Title == "" {
+		responseBody = fmt.Sprintf(Messages.ConfirmSubscriptionAlt_body.Print(), newsletter.LocalUser)
+	} else {
+		responseBody = fmt.Sprintf(Messages.ConfirmSubscription_body.Print(), newsletter.Conf.Settings.Title)
+	}
+
+	mail := response(Messages.ConfirmSubscription_subject.Print(), responseBody)
 	mail.ReplyTo = newsletter.SubscribeConfirmAddr()
 	mail.Id = fmt.Sprintf("<%s>", newsletter.GenerateId(newsletter.HashWithSecret(fromAddr)))
 	newsletter.SendMail(mail)
@@ -93,10 +97,15 @@ func subscribeConfirm() error {
 		return fmt.Errorf("error while subscribing address: %v", err)
 	}
 	log.Printf("address %q has been added to subscribers", fromAddr)
-	sendResponse(
-		Messages.SuccessfullSubscription_subject.Print(),
-		Messages.SuccessfullSubscription_body.Print()+newsletter.Conf.Settings.Title,
-	)
+
+	var responseBody string
+	if newsletter.Conf.Settings.Title == "" {
+		responseBody = fmt.Sprintf(Messages.SuccessfullSubscriptionAlt_body.Print(), newsletter.LocalUser)
+	} else {
+		responseBody = fmt.Sprintf(Messages.SuccessfullSubscription_body.Print(), newsletter.Conf.Settings.Title)
+	}
+
+	sendResponse(Messages.SuccessfullSubscription_subject.Print(), responseBody)
 	return nil
 }
 
@@ -107,10 +116,15 @@ func unsubscribe() error {
 	}
 
 	log.Printf("address %q removed from subscribers", fromAddr)
-	sendResponse(
-		Messages.SuccessfullUnsubscription_subject.Print(),
-		Messages.SuccessfullUnsubscription_body.Print()+newsletter.Conf.Settings.Title,
-	)
+
+	var responseBody string
+	if newsletter.Conf.Settings.Title == "" {
+		responseBody = fmt.Sprintf(Messages.SuccessfullUnsubscriptionAlt_body.Print(), newsletter.LocalUser)
+	} else {
+		responseBody = fmt.Sprintf(Messages.SuccessfullUnsubscription_body.Print(), newsletter.Conf.Settings.Title)
+	}
+
+	sendResponse(Messages.SuccessfullUnsubscription_subject.Print(), responseBody)
 	return nil
 }
 
