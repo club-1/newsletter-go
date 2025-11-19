@@ -37,14 +37,13 @@ var (
 	ConfigPath string = ".config/newsletter"
 	LocalUser  string
 
-	Locale = "en"
-
 	Routes = [...]string{RouteSubscribe, RouteSubscribeConfirm, RouteUnSubscribe, RouteSend, RouteSendConfirm}
 )
 
 type Settings struct {
 	Title       string
 	DisplayName string
+	Language    string
 }
 
 type Config struct {

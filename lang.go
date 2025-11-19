@@ -1,18 +1,24 @@
 package newsletter
 
+const (
+	LangEnglish = "en"
+	LangFrench  = "fr"
+)
+
 type Message struct {
 	en string
 	fr string
 }
 
 func (m Message) Print() string {
-	switch Locale {
-	case "en":
+	switch Conf.Settings.Language {
+	case LangEnglish:
 		return m.en
-	case "fr":
+	case LangFrench:
 		return m.fr
+	default:
+		return m.en
 	}
-	panic("internal error")
 }
 
 var Messages = struct {

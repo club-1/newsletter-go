@@ -147,6 +147,16 @@ func setup() error {
 				Value(&newsletter.Conf.Settings.DisplayName),
 		),
 		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("Language").
+				Description("Language used for subscription and unsubscription mails").
+				Options(
+					huh.NewOption("english", newsletter.LangEnglish),
+					huh.NewOption("french", newsletter.LangFrench),
+				).
+				Value(&newsletter.Conf.Settings.Language),
+		),
+		huh.NewGroup(
 			huh.NewText().
 				Title("Signature").
 				Description("newsletter's signature will be inserted under each newsletter").

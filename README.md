@@ -27,7 +27,9 @@ Features
     - [x] signature is stored as a plain text file
     - [x] advanced config is stored in JSON file
     - [x] interactive setup through CLI
-    - [ ] change language of mail subscribers interface (currently hardcoded in english)
+    - [x] change language of mail subscribe/unsubscribe interface
+        - [x] english (default)
+        - [x] french
 - other
     - [x] logger
     - [ ] store archives of newsletters
@@ -46,7 +48,7 @@ Create necessary `.forward` files. Add `-v` option to increase verbosity.
 
     newsletter setup
 
-Interactive setup to edit display name, newsletter title, and signature.
+Interactive setup to edit display name, newsletter title, language, and signature.
 
 ### Send newsletter
 
