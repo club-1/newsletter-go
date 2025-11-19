@@ -33,6 +33,9 @@ var Messages = struct {
 	SuccessfullUnsubscription_subject Message
 	SuccessfullUnsubscription_body    Message
 	SuccessfullUnsubscriptionAlt_body Message
+	UnsubscriptionFailed_subject      Message
+	UnsubscriptionFailed_body         Message
+	UnsubscriptionFailedAlt_body      Message
 	VerificationFailed_subject        Message
 	VerificationFailed_body           Message
 }{
@@ -79,6 +82,18 @@ var Messages = struct {
 	SuccessfullUnsubscriptionAlt_body: Message{
 		en: "Your email has been successfully unsubscribed from %s's newsletter.",
 		fr: "Votre email a bien été désinscrit de la newsletter de %s.",
+	},
+	UnsubscriptionFailed_subject: Message{
+		en: "Unsubscription failed",
+		fr: "Échec de la désinscription",
+	},
+	UnsubscriptionFailed_body: Message{
+		en: "Failed to unsubscribe your email from newsletter [%s]. Contact list owner for more infos: <%s>.",
+		fr: "La désinscription de votre email à la newsletter [%s] a échoué. Contactez le propriétaire de la liste pour plus d'infos : <%s>",
+	},
+	UnsubscriptionFailedAlt_body: Message{
+		en: "Failed to unsubscribe your email from %s's newsletter. Contact list owner for more infos: <%s>.",
+		fr: "La désinscription de votre email à la newsletter de %s a échoué. Contactez le propriétaire de la liste pour plus d'infos : <%s>",
 	},
 	VerificationFailed_subject: Message{
 		en: "Verification failed",

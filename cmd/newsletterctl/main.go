@@ -112,6 +112,13 @@ func subscribeConfirm() error {
 func unsubscribe() error {
 	err := newsletter.Conf.Unsubscribe(fromAddr)
 	if err != nil {
+		var responseBody string
+		if newsletter.Conf.Settings.Title == "" {
+			responseBody = fmt.Sprintf(Messages.UnsubscriptionFailedAlt_body.Print(), newsletter.LocalUser, newsletter.LocalUserAddr())
+		} else {
+			responseBody = fmt.Sprintf(Messages.UnsubscriptionFailed_body.Print(), newsletter.Conf.Settings.Title, newsletter.LocalUserAddr())
+		}
+		sendResponse(Messages.UnsubscriptionFailed_subject.Print(), responseBody)
 		return fmt.Errorf("could not unsubscribe: %w", err)
 	}
 
