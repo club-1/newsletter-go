@@ -87,7 +87,7 @@ func subscribeConfirm() error {
 	if messageId != newsletter.GenerateId(newsletter.HashWithSecret(fromAddr)) {
 		sendResponse(
 			Messages.VerificationFailed_subject.Print(),
-			Messages.VerificationFailed_body.Print(),
+			fmt.Sprintf(Messages.VerificationFailed_body.Print(), newsletter.LocalUserAddr()),
 		)
 		return fmt.Errorf("hash verification failed")
 	}

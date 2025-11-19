@@ -85,7 +85,7 @@ var Messages = struct {
 		fr: "Échec de la vérification",
 	},
 	VerificationFailed_body: Message{
-		en: "Your email cannot be added to the subscripted list, contact list owner for more infos.",
-		fr: "Votre email ne peut pas être inscrit à la liste, veuillez contacter le propriétaire de la liste pour plus d'infos.",
+		en: "Your email cannot be added to the subscripted list, contact list owner for more infos: <%s>.",
+		fr: "Votre email ne peut pas être inscrit à la liste, veuillez contacter le propriétaire de la liste pour plus d'infos : <%s>.",
 	},
 }
