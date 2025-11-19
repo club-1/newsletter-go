@@ -22,8 +22,6 @@ const (
 	SignatureFile string = "signature.txt"
 	SettingsFile  string = "settings.json"
 
-	LocalServer string = "club1.fr"
-
 	RouteSubscribe        string = "subscribe"
 	RouteSubscribeConfirm string = "subscribe-confirm"
 	RouteUnSubscribe      string = "unsubscribe"
@@ -36,6 +34,7 @@ var (
 	HomeDir    string
 	ConfigPath string = ".config/newsletter"
 	LocalUser  string
+	Hostname   string
 
 	Routes = [...]string{RouteSubscribe, RouteSubscribeConfirm, RouteUnSubscribe, RouteSend, RouteSendConfirm}
 )
@@ -158,6 +157,12 @@ func InitLogger(name string) *os.File {
 // Load config in newsletter.Conf struct
 // also get username
 func ReadConfig() error {
+	var err error
+	Hostname, err = os.Hostname()
+	if err != nil {
+		return fmt.Errorf("could not get hostname: %w", err)
+	}
+
 	user, err := user.Current()
 	if err != nil {
 		return fmt.Errorf("could not get local user: %w", err)

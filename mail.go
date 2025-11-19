@@ -27,23 +27,23 @@ func (m *Mail) From() string {
 }
 
 func PostmasterAddr() string {
-	return "postmaster@" + LocalServer
+	return "postmaster@" + Hostname
 }
 
 func LocalUserAddr() string {
-	return LocalUser + "@" + LocalServer
+	return LocalUser + "@" + Hostname
 }
 
 func UnsubscribeAddr() string {
-	return LocalUser + "+" + RouteUnSubscribe + "@" + LocalServer
+	return LocalUser + "+" + RouteUnSubscribe + "@" + Hostname
 }
 
 func SubscribeConfirmAddr() string {
-	return LocalUser + "+" + RouteSubscribeConfirm + "@" + LocalServer
+	return LocalUser + "+" + RouteSubscribeConfirm + "@" + Hostname
 }
 
 func SendConfirmAddr() string {
-	return LocalUser + "+" + RouteSendConfirm + "@" + LocalServer
+	return LocalUser + "+" + RouteSendConfirm + "@" + Hostname
 }
 
 func hashString(s string) string {
@@ -58,13 +58,13 @@ func HashWithSecret(s string) string {
 // generate a Message-ID
 // it's based on incoming mail From address and local .secret file content
 func GenerateId(hash string) string {
-	return LocalUser + "-" + hash + "@" + LocalServer
+	return LocalUser + "-" + hash + "@" + Hostname
 }
 
 // retrive hash from message-ID using the form: `USER-HASH@SERVER`
 func GetHashFromId(messageId string) (string, error) {
 	after, prefixFound := strings.CutPrefix(messageId, LocalUser+"-")
-	before, suffixFound := strings.CutSuffix(after, "@"+LocalServer)
+	before, suffixFound := strings.CutSuffix(after, "@"+Hostname)
 	if !prefixFound || !suffixFound {
 		return "", fmt.Errorf("message ID does'nt match generated ID form")
 	}
@@ -139,7 +139,7 @@ func DefaultMail(subject string, body string) *Mail {
 	}
 
 	return &Mail{
-		FromAddr: LocalUser + "@" + LocalServer,
+		FromAddr: LocalUser + "@" + Hostname,
 		FromName: Conf.Settings.DisplayName,
 		Subject:  subject,
 		Body:     body,
