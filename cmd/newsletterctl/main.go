@@ -19,6 +19,8 @@ const CmdName = "newsletterctl"
 var (
 	incomingEmail letters.Email
 	fromAddr      string
+
+	Messages = newsletter.Messages
 )
 
 // base response mail directed toward recieved From address
@@ -46,13 +48,16 @@ func sendResponse(subject string, body string) {
 func subscribe() error {
 	if slices.Contains(newsletter.Conf.Emails, fromAddr) {
 		sendResponse(
-			"already subscribed",
-			fmt.Sprintf("your email is already subscribed, if problem persist, contact <%s>", newsletter.PostmasterAddr()),
+			Messages.AlreadySubscribed_subject.Print(),
+			fmt.Sprintf(Messages.AlreadySubscribed_body.Print(), newsletter.PostmasterAddr()),
 		)
 		return fmt.Errorf("already subscribed")
 	}
 
-	mail := response("confirm your subsciption", "Reply to this email to confirm that you want to subscribe to "+newsletter.Conf.Settings.Title)
+	mail := response(
+		Messages.ConfirmSubscription_subject.Print(),
+		Messages.ConfirmSubscription_body.Print()+newsletter.Conf.Settings.Title,
+	)
 	mail.ReplyTo = newsletter.SubscribeConfirmAddr()
 	mail.Id = fmt.Sprintf("<%s>", newsletter.GenerateId(newsletter.HashWithSecret(fromAddr)))
 	newsletter.SendMail(mail)
@@ -64,8 +69,8 @@ func subscribe() error {
 func subscribeConfirm() error {
 	if slices.Contains(newsletter.Conf.Emails, fromAddr) {
 		sendResponse(
-			"already subscribed",
-			fmt.Sprintf("your email is already subscribed, if problem persist, contact <%s>", newsletter.PostmasterAddr()),
+			Messages.AlreadySubscribed_subject.Print(),
+			fmt.Sprintf(Messages.AlreadySubscribed_body.Print(), newsletter.PostmasterAddr()),
 		)
 		return fmt.Errorf("already subscribed")
 	}
@@ -76,7 +81,10 @@ func subscribeConfirm() error {
 
 	messageId := string(incomingEmail.Headers.InReplyTo[0])
 	if messageId != newsletter.GenerateId(newsletter.HashWithSecret(fromAddr)) {
-		sendResponse("an error occured", "your email cannot be added to the subscripted list, contact list owner for more infos")
+		sendResponse(
+			Messages.VerificationFailed_subject.Print(),
+			Messages.VerificationFailed_body.Print(),
+		)
 		return fmt.Errorf("hash verification failed")
 	}
 
@@ -85,7 +93,10 @@ func subscribeConfirm() error {
 		return fmt.Errorf("error while subscribing address: %v", err)
 	}
 	log.Printf("address %q has been added to subscribers", fromAddr)
-	sendResponse("subscription is successfull", "your email has been added to list "+newsletter.Conf.Settings.Title)
+	sendResponse(
+		Messages.SuccessfullSubscription_subject.Print(),
+		Messages.SuccessfullSubscription_body.Print()+newsletter.Conf.Settings.Title,
+	)
 	return nil
 }
 
@@ -96,7 +107,10 @@ func unsubscribe() error {
 	}
 
 	log.Printf("address %q removed from subscribers", fromAddr)
-	sendResponse("successfully unsubscribed", "your email was successfully removed from the list "+newsletter.Conf.Settings.Title)
+	sendResponse(
+		Messages.SuccessfullUnsubscription_subject.Print(),
+		Messages.SuccessfullUnsubscription_body.Print()+newsletter.Conf.Settings.Title,
+	)
 	return nil
 }
 

@@ -37,6 +37,8 @@ var (
 	ConfigPath string = ".config/newsletter"
 	LocalUser  string
 
+	Locale = "en"
+
 	Routes = [...]string{RouteSubscribe, RouteSubscribeConfirm, RouteUnSubscribe, RouteSend, RouteSendConfirm}
 )
 
