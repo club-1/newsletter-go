@@ -189,6 +189,7 @@ func setup() error {
 	if verbose {
 		fmt.Printf("signature sucessfully saved to file %q\n", newsletter.SignatureFile)
 	}
+	fmt.Println("💾 saved !")
 	return nil
 }
 
