@@ -1,13 +1,15 @@
 Newsletter-Go
 =============
 
-A very simple newsletter for CLUB1 server members.
+A very basic newsletter program for POSIX servers.
 
-The design strategy of this piece of code is to take advantage of Postfix `.forward` files combined with recipient delimiter. 
+It allow local server users to send a newsletter with their own email address to a list of subscribers.
 
-This is a rewrite of <https://github.com/club-1/newsletter> in Go.
+It was designed for [CLUB1 community server](https://club1.fr/english), but may be usable by other UNIX-like servers (like *tilde* servers).
 
+The design strategy of this piece of code is to take advantage of Sendmail-style `.forward` files combined with recipient delimiter (`+` addresses). On CLUB1's server, we use it with Postfix ([man](https://www.postfix.org/local.8.html)).
 
+This is a rewrite of the previous Bash version <https://github.com/club-1/newsletter> in Go.
 
 Features
 --------
@@ -31,11 +33,29 @@ Features
         - [x] english (default)
         - [x] french
 - other
+    - [x] fancy ascii banner
     - [x] logger
     - [ ] store archives of newsletters
 
+
+Installation
+------------
+
+- `newsletter` is the user facing program that can be used to setup and send the news.
+- `newsletterctl` is the part that catch subscription and unsubscriptions.
+
+They **have to** be inside the following subfolders :
+
+    bin/newsletter
+    sbin/newsletterctl
+
+For example inside `/usr/local`.
+
+
 Usage
 -----
+
+Users may setup, send, or stop the newsletter using the command line.
 
 ### Setup
 
