@@ -20,6 +20,7 @@ var (
 	verbose bool
 	yes     bool
 	preview bool
+	help    bool
 )
 
 func getCmdPrefix() (string, error) {
@@ -257,28 +258,48 @@ func send(args []string) error {
 	return nil
 }
 
+const banner = "" +
+	"      __    __          __   /   __  _/_  _/_    __    __\n" +
+	"    /   ) /___)| /| /  (_ ` /  /___) /    /    /___) /   `\n" +
+	"___/___/_(___ _|/_|/__(__)_/__(___ _(_ __(_ __(___ _/____v3.0___"
+
+const usage = `
+Usage: newsletter [OPTION]... setup
+       newsletter [OPTION]... send SUBJECT [CONTENT_FILE]
+
+Options:`
+
 func main() {
-	logFile := newsletter.InitLogger(CmdName)
-	defer logFile.Close()
-
-	err := newsletter.ReadConfig()
-	if err != nil {
-		log.Printf("init: %v", err)
-	}
-
 	flag.BoolVar(&verbose, "v", false, "verbose: increase verbosity of program")
 	flag.BoolVar(&yes, "y", false, "yes: always answer yes when program ask for confirmation")
 	flag.BoolVar(&preview, "p", false, "preview: limit to a preview (cannot by used with -y)")
+	flag.BoolVar(&help, "h", false, "shorthand for -help")
+	flag.BoolVar(&help, "help", false, "show help message")
 	flag.Parse()
+
+	if help {
+		fmt.Println(banner)
+		fmt.Println(usage)
+		flag.CommandLine.SetOutput(os.Stdout)
+		flag.PrintDefaults()
+		return
+	}
 
 	if yes && preview {
 		log.Fatalf("illegal combination: -y and -p connot be used at the same time")
 	}
 
 	args := flag.Args()
-
 	if len(args) < 1 {
 		log.Fatalf("missing subcommand")
+	}
+
+	logFile := newsletter.InitLogger(CmdName)
+	defer logFile.Close()
+
+	err := newsletter.ReadConfig()
+	if err != nil {
+		log.Printf("init: %v", err)
 	}
 
 	var cmdErr error

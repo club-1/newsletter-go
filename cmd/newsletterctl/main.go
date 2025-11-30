@@ -220,6 +220,12 @@ func sendConfirm() error {
 }
 
 func main() {
+	flag.Parse()
+	args := flag.Args()
+	if len(args) < 1 {
+		log.Fatal("missing sub command")
+	}
+
 	logFile := newsletter.InitLogger(CmdName)
 	defer logFile.Close()
 
@@ -232,13 +238,6 @@ func main() {
 	err = newsletter.ReadConfig()
 	if err != nil {
 		log.Fatalf("init: %v", err)
-	}
-
-	flag.Parse()
-	args := flag.Args()
-
-	if len(args) < 1 {
-		log.Fatal("missing sub command")
 	}
 
 	cmdErrPrefix := fmt.Sprintf("recieved mail to route %q", args[0])
