@@ -2,8 +2,6 @@ module github.com/club-1/newsletter-go
 
 go 1.23.0
 
-toolchain go1.24.10
-
 require (
 	github.com/charmbracelet/huh v0.8.0
 	github.com/mnako/letters v0.2.6
