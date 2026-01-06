@@ -27,14 +27,18 @@ const (
 	RouteUnSubscribe      string = "unsubscribe"
 	RouteSend             string = "send"
 	RouteSendConfirm      string = "send-confirm"
+
+	EnvLogDir string = "NEWSLETTER_LOG_DIR"
 )
 
 var (
-	Conf       *Config
-	HomeDir    string
-	ConfigPath string = ".config/newsletter"
-	LocalUser  string
-	Hostname   string
+	Conf        *Config
+	HomeDir     string
+	ConfigPath  string = ".config/newsletter"
+	LocalUser   string
+	Hostname    string
+	LogDir      string
+	LogFilePath string
 
 	Routes = [...]string{RouteSubscribe, RouteSubscribeConfirm, RouteUnSubscribe, RouteSend, RouteSendConfirm}
 )
@@ -132,19 +136,25 @@ func randString() string {
 	return string(dst)
 }
 
+// Logger dir use environnement var
+// if not defined, it fallback to user cache directory
 func InitLogger(name string) *os.File {
-	userCacheDir, err := os.UserCacheDir()
-	if err != nil {
-		log.Fatalln("cannot get user cache directory:", err)
+	LogDir = os.Getenv(EnvLogDir)
+	if LogDir == "" {
+		userCacheDir, err := os.UserCacheDir()
+		if err != nil {
+			log.Fatalln("cannot get user cache directory:", err)
+		}
+
+		LogDir = filepath.Join(userCacheDir, "newsletter")
 	}
 
-	logDir := filepath.Join(userCacheDir, "newsletter")
-
-	err = os.MkdirAll(logDir, 0775)
+	err := os.MkdirAll(LogDir, 0775)
 	if err != nil {
 		log.Fatalln("cannot create log folder:", err)
 	}
-	LogFilePath := filepath.Join(logDir, name+".log")
+
+	LogFilePath = filepath.Join(LogDir, name+".log")
 
 	logFile, err := os.OpenFile(LogFilePath, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0664)
 	if err != nil {
