@@ -34,8 +34,7 @@ Features
         - [x] french
 - other
     - [x] fancy ascii banner
-    - [x] logger
-        - [x] settable log file location
+    - [x] log to the Syslog
     - [ ] store archives of newsletters
 
 
