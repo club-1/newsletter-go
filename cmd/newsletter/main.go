@@ -285,6 +285,8 @@ func main() {
 		return
 	}
 
+	log.SetFlags(0) // remove all logger flags (remove timestamp)
+
 	if yes && preview {
 		log.Fatalf("illegal combination: -y and -p connot be used at the same time")
 	}
@@ -293,9 +295,6 @@ func main() {
 	if len(args) < 1 {
 		log.Fatalf("missing subcommand")
 	}
-
-	logFile := newsletter.InitLogger(CmdName)
-	defer logFile.Close()
 
 	err := newsletter.ReadConfig()
 	if err != nil {

@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"os/user"
@@ -134,34 +133,6 @@ func randString() string {
 	dst := make([]byte, base64.StdEncoding.EncodedLen(len(key)))
 	base64.StdEncoding.Encode(dst, key)
 	return string(dst)
-}
-
-// Logger dir use environnement var
-// if not defined, it fallback to user cache directory
-func InitLogger(name string) *os.File {
-	LogDir = os.Getenv(EnvLogDir)
-	if LogDir == "" {
-		userCacheDir, err := os.UserCacheDir()
-		if err != nil {
-			log.Fatalln("cannot get user cache directory:", err)
-		}
-
-		LogDir = filepath.Join(userCacheDir, "newsletter")
-	}
-
-	err := os.MkdirAll(LogDir, 0775)
-	if err != nil {
-		log.Fatalln("cannot create log folder:", err)
-	}
-
-	LogFilePath = filepath.Join(LogDir, name+".log")
-
-	logFile, err := os.OpenFile(LogFilePath, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0664)
-	if err != nil {
-		log.Fatalln("cannot create or read log file: %w", err)
-	}
-	log.SetOutput(io.MultiWriter(os.Stdout, logFile))
-	return logFile
 }
 
 // Load config in newsletter.Conf struct
