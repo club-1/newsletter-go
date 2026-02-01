@@ -13,6 +13,6 @@ clean:
 	rm -rf bin sbin
 
 deploy: $(BINS)
-	rsync --checksum --archive --verbose bin sbin $(REMOTE):$(REMOTE_PATH)
+	rsync --checksum --recursive --verbose bin sbin $(REMOTE):$(REMOTE_PATH)
 
 .PHONY: all $(BINS) clean deploy
