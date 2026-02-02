@@ -26,8 +26,6 @@ const (
 	RouteUnSubscribe      string = "unsubscribe"
 	RouteSend             string = "send"
 	RouteSendConfirm      string = "send-confirm"
-
-	EnvLogDir string = "NEWSLETTER_LOG_DIR"
 )
 
 var (

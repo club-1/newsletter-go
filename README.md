@@ -51,10 +51,6 @@ They **have to** be inside the following subfolders :
 
 For example inside `/usr/local`.
 
-### Configuration
-
-The logger output directory can be set using `NEWSLETTER_LOG_DIR` environnement variable.
-If it's not set, it fallback to default user cache directory.
 
 Usage
 -----
