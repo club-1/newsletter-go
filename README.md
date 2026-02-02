@@ -1,6 +1,8 @@
 Newsletter-Go
 =============
 
+[![build][build-svg]][build-url] [![coverage][cover-svg]][cover-url]
+
 A very basic newsletter program for POSIX servers.
 
 It allow local server users to send a newsletter with their own email address to a list of subscribers.
@@ -109,3 +111,9 @@ Deployment will create:
 
     bin/newsletter
     sbin/newsletterctl
+
+
+[build-svg]: https://github.com/club-1/newsletter-go/actions/workflows/build.yml/badge.svg
+[build-url]: https://github.com/club-1/newsletter-go/actions/workflows/build.yml
+[cover-svg]: https://github.com/club-1/newsletter-go/wiki/coverage.svg
+[cover-url]: https://raw.githack.com/wiki/club-1/newsletter-go/coverage.html
