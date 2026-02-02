@@ -26,6 +26,14 @@ var (
 	SysLog *syslog.Writer
 )
 
+func sysLogErr(msg string) {
+	SysLog.Err(fmt.Sprintf("%v: %v", newsletter.LocalUser, msg))
+}
+
+func sysLogInfo(msg string) {
+	SysLog.Info(fmt.Sprintf("%v: %v", newsletter.LocalUser, msg))
+}
+
 // base response mail directed toward recieved From address
 func response(subject string, body string) *newsletter.Mail {
 	mail := newsletter.DefaultMail(subject, body)
@@ -43,10 +51,10 @@ func sendResponse(subject string, body string) {
 	err := newsletter.SendMail(mail)
 	if err != nil {
 		msg := fmt.Sprintf("error while sending response mail: %v", err)
-		SysLog.Err(msg)
+		sysLogErr(msg)
 	} else {
 		msg := fmt.Sprintf("response mail sent to %q", fromAddr)
-		SysLog.Info(msg)
+		sysLogInfo(msg)
 	}
 }
 
@@ -72,7 +80,7 @@ func subscribe() error {
 	newsletter.SendMail(mail)
 
 	msg := fmt.Sprintf("subscription confirmation mail sent to %q", fromAddr)
-	SysLog.Info(msg)
+	sysLogInfo(msg)
 	return nil
 }
 
@@ -103,7 +111,7 @@ func subscribeConfirm() error {
 		return fmt.Errorf("error while subscribing address: %v", err)
 	}
 	msg := fmt.Sprintf("address %q has been added to subscribers", fromAddr)
-	SysLog.Info(msg)
+	sysLogInfo(msg)
 
 	var responseBody string
 	if newsletter.Conf.Settings.Title == "" {
@@ -130,7 +138,7 @@ func unsubscribe() error {
 	}
 
 	msg := fmt.Sprintf("address %q removed from subscribers", fromAddr)
-	SysLog.Info(msg)
+	sysLogInfo(msg)
 
 	var responseBody string
 	if newsletter.Conf.Settings.Title == "" {
@@ -224,7 +232,7 @@ func sendConfirm() error {
 		return fmt.Errorf("sending newsletter: %w", err)
 	}
 	msg := fmt.Sprintf("newsletter successfully send to all the %v subscribers", len(newsletter.Conf.Emails))
-	SysLog.Info(msg)
+	sysLogInfo(msg)
 	return nil
 }
 
@@ -236,7 +244,7 @@ func main() {
 	}
 
 	var err error
-	SysLog, err = syslog.New(syslog.LOG_USER, CmdName)
+	SysLog, err = syslog.New(syslog.LOG_USER, newsletter.LogIdentifier)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -245,14 +253,14 @@ func main() {
 	incomingEmail, err = letters.ParseEmail(os.Stdin)
 	if err != nil {
 		msg := fmt.Sprintf("error while parsing input email: %v", err)
-		SysLog.Err(msg)
+		sysLogErr(msg)
 		os.Exit(1)
 	}
 
 	err = newsletter.ReadConfig()
 	if err != nil {
 		msg := fmt.Sprintf("init: %v", err)
-		SysLog.Err(msg)
+		sysLogErr(msg)
 		os.Exit(1)
 	}
 
@@ -260,7 +268,7 @@ func main() {
 
 	if len(incomingEmail.Headers.From) == 0 {
 		msg := fmt.Sprintf(cmdErrPrefix + " without From header")
-		SysLog.Err(msg)
+		sysLogErr(msg)
 		os.Exit(1)
 	}
 
@@ -282,13 +290,13 @@ func main() {
 		cmdErr = sendConfirm()
 	default:
 		msg := fmt.Sprintf("invalid sub command: %q", args[0])
-		SysLog.Err(msg)
+		sysLogErr(msg)
 		os.Exit(1)
 	}
 
 	if cmdErr != nil {
 		msg := fmt.Sprintf(cmdErrPrefix+", error: %v", cmdErr)
-		SysLog.Err(msg)
+		sysLogErr(msg)
 		// do not send non-zero response code because otherwise
 		// it would answer an error feedback automatically by email
 	}

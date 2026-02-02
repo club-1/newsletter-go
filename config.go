@@ -26,6 +26,8 @@ const (
 	RouteUnSubscribe      string = "unsubscribe"
 	RouteSend             string = "send"
 	RouteSendConfirm      string = "send-confirm"
+
+	LogIdentifier string = "newsletter"
 )
 
 var (

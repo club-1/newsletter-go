@@ -87,6 +87,12 @@ If `-p` is set, action is limited to preview.
 
 Remove `.forward` files to deactivate newsletter. Add `-v` option to increase verbosity.
 
+### read logs
+
+Logs are stored in `syslog` using the identifier `newsletter`.
+You can read them using the following command:
+
+    journalctl -t newsletter
 
 
 Deployment
