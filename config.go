@@ -12,6 +12,8 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+
+	"github.com/club-1/newsletter-go/messages"
 )
 
 const (
@@ -37,7 +39,7 @@ var (
 type Settings struct {
 	Title       string
 	DisplayName string
-	Language    string
+	Language    messages.Language
 }
 
 type Config struct {

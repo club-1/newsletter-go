@@ -13,6 +13,7 @@ import (
 	"github.com/charmbracelet/huh"
 	"github.com/club-1/newsletter-go"
 	"github.com/club-1/newsletter-go/mailer"
+	"github.com/club-1/newsletter-go/messages"
 )
 
 const CmdName = "newsletter"
@@ -159,12 +160,12 @@ func setup() error {
 				Value(&nl.Config.Settings.DisplayName),
 		),
 		huh.NewGroup(
-			huh.NewSelect[string]().
+			huh.NewSelect[messages.Language]().
 				Title("Language").
 				Description("Language used for subscription and unsubscription mails").
 				Options(
-					huh.NewOption("english", newsletter.LangEnglish),
-					huh.NewOption("french", newsletter.LangFrench),
+					huh.NewOption("english", messages.LangEnglish),
+					huh.NewOption("french", messages.LangFrench),
 				).
 				Value(&nl.Config.Settings.Language),
 		),

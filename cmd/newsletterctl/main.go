@@ -12,6 +12,7 @@ import (
 
 	"github.com/club-1/newsletter-go"
 	"github.com/club-1/newsletter-go/mailer"
+	"github.com/club-1/newsletter-go/messages"
 
 	"github.com/mnako/letters"
 )
@@ -23,8 +24,6 @@ var (
 	nl            *newsletter.Newsletter
 	incomingEmail letters.Email
 	fromAddr      string
-
-	Messages = newsletter.Messages
 )
 
 func sysLogErr(msg string) {
@@ -62,20 +61,20 @@ func sendResponse(subject string, body string) {
 func subscribe() error {
 	if slices.Contains(nl.Config.Emails, fromAddr) {
 		sendResponse(
-			Messages.AlreadySubscribed_subject.Print(),
-			fmt.Sprintf(Messages.AlreadySubscribed_body.Print(), nl.PostmasterAddr()),
+			messages.AlreadySubscribed_subject.Print(),
+			fmt.Sprintf(messages.AlreadySubscribed_body.Print(), nl.PostmasterAddr()),
 		)
 		return fmt.Errorf("already subscribed")
 	}
 
 	var responseBody string
 	if nl.Config.Settings.Title == "" {
-		responseBody = fmt.Sprintf(Messages.ConfirmSubscriptionAlt_body.Print(), nl.LocalUser)
+		responseBody = fmt.Sprintf(messages.ConfirmSubscriptionAlt_body.Print(), nl.LocalUser)
 	} else {
-		responseBody = fmt.Sprintf(Messages.ConfirmSubscription_body.Print(), nl.Config.Settings.Title)
+		responseBody = fmt.Sprintf(messages.ConfirmSubscription_body.Print(), nl.Config.Settings.Title)
 	}
 
-	mail := response(Messages.ConfirmSubscription_subject.Print(), responseBody)
+	mail := response(messages.ConfirmSubscription_subject.Print(), responseBody)
 	mail.ReplyTo = nl.SubscribeConfirmAddr()
 	mail.Id = fmt.Sprintf("<%s>", nl.GenerateId(nl.HashWithSecret(fromAddr)))
 	mailer.Send(mail)
@@ -88,8 +87,8 @@ func subscribe() error {
 func subscribeConfirm() error {
 	if slices.Contains(nl.Config.Emails, fromAddr) {
 		sendResponse(
-			Messages.AlreadySubscribed_subject.Print(),
-			fmt.Sprintf(Messages.AlreadySubscribed_body.Print(), nl.PostmasterAddr()),
+			messages.AlreadySubscribed_subject.Print(),
+			fmt.Sprintf(messages.AlreadySubscribed_body.Print(), nl.PostmasterAddr()),
 		)
 		return fmt.Errorf("already subscribed")
 	}
@@ -101,8 +100,8 @@ func subscribeConfirm() error {
 	messageId := string(incomingEmail.Headers.InReplyTo[0])
 	if messageId != nl.GenerateId(nl.HashWithSecret(fromAddr)) {
 		sendResponse(
-			Messages.VerificationFailed_subject.Print(),
-			fmt.Sprintf(Messages.VerificationFailed_body.Print(), nl.LocalUserAddr()),
+			messages.VerificationFailed_subject.Print(),
+			fmt.Sprintf(messages.VerificationFailed_body.Print(), nl.LocalUserAddr()),
 		)
 		return fmt.Errorf("hash verification failed")
 	}
@@ -116,12 +115,12 @@ func subscribeConfirm() error {
 
 	var responseBody string
 	if nl.Config.Settings.Title == "" {
-		responseBody = fmt.Sprintf(Messages.SuccessfullSubscriptionAlt_body.Print(), nl.LocalUser)
+		responseBody = fmt.Sprintf(messages.SuccessfullSubscriptionAlt_body.Print(), nl.LocalUser)
 	} else {
-		responseBody = fmt.Sprintf(Messages.SuccessfullSubscription_body.Print(), nl.Config.Settings.Title)
+		responseBody = fmt.Sprintf(messages.SuccessfullSubscription_body.Print(), nl.Config.Settings.Title)
 	}
 
-	sendResponse(Messages.SuccessfullSubscription_subject.Print(), responseBody)
+	sendResponse(messages.SuccessfullSubscription_subject.Print(), responseBody)
 	return nil
 }
 
@@ -130,11 +129,11 @@ func unsubscribe() error {
 	if err != nil {
 		var responseBody string
 		if nl.Config.Settings.Title == "" {
-			responseBody = fmt.Sprintf(Messages.UnsubscriptionFailedAlt_body.Print(), nl.LocalUser, nl.LocalUserAddr())
+			responseBody = fmt.Sprintf(messages.UnsubscriptionFailedAlt_body.Print(), nl.LocalUser, nl.LocalUserAddr())
 		} else {
-			responseBody = fmt.Sprintf(Messages.UnsubscriptionFailed_body.Print(), nl.Config.Settings.Title, nl.LocalUserAddr())
+			responseBody = fmt.Sprintf(messages.UnsubscriptionFailed_body.Print(), nl.Config.Settings.Title, nl.LocalUserAddr())
 		}
-		sendResponse(Messages.UnsubscriptionFailed_subject.Print(), responseBody)
+		sendResponse(messages.UnsubscriptionFailed_subject.Print(), responseBody)
 		return fmt.Errorf("could not unsubscribe: %w", err)
 	}
 
@@ -143,12 +142,12 @@ func unsubscribe() error {
 
 	var responseBody string
 	if nl.Config.Settings.Title == "" {
-		responseBody = fmt.Sprintf(Messages.SuccessfullUnsubscriptionAlt_body.Print(), nl.LocalUser)
+		responseBody = fmt.Sprintf(messages.SuccessfullUnsubscriptionAlt_body.Print(), nl.LocalUser)
 	} else {
-		responseBody = fmt.Sprintf(Messages.SuccessfullUnsubscription_body.Print(), nl.Config.Settings.Title)
+		responseBody = fmt.Sprintf(messages.SuccessfullUnsubscription_body.Print(), nl.Config.Settings.Title)
 	}
 
-	sendResponse(Messages.SuccessfullUnsubscription_subject.Print(), responseBody)
+	sendResponse(messages.SuccessfullUnsubscription_subject.Print(), responseBody)
 	return nil
 }
 
@@ -256,6 +255,7 @@ func main() {
 		SysLog.Crit(msg)
 		os.Exit(1)
 	}
+	messages.SetLanguage(nl.Config.Settings.Language)
 
 	incomingEmail, err = letters.ParseEmail(os.Stdin)
 	if err != nil {
