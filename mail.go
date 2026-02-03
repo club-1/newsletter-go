@@ -4,30 +4,64 @@ import (
 	"crypto/sha256"
 	"encoding/base32"
 	"fmt"
+	"os"
+	"os/user"
 	"strings"
 	"time"
 
 	"github.com/club-1/newsletter-go/mailer"
 )
 
-func PostmasterAddr() string {
-	return "postmaster@" + Hostname
+type Newsletter struct {
+	Config    *Config
+	Hostname  string
+	LocalUser string
 }
 
-func LocalUserAddr() string {
-	return LocalUser + "@" + Hostname
+// InitNewsletter initialises everything needed for the newsletter program.
+// It reads the current user and its home directory than loads the config
+// from the filesystem.
+func InitNewsletter() (*Newsletter, error) {
+	hostname, err := os.Hostname()
+	if err != nil {
+		return nil, fmt.Errorf("could not get hostname: %w", err)
+	}
+
+	user, err := user.Current()
+	if err != nil {
+		return nil, fmt.Errorf("could not get local user: %w", err)
+	}
+
+	config, err := InitConfig(user.HomeDir)
+	if err != nil {
+		return nil, fmt.Errorf("could not init config: %w", err)
+	}
+
+	return &Newsletter{
+		Config:    config,
+		Hostname:  hostname,
+		LocalUser: user.Username,
+	}, nil
 }
 
-func UnsubscribeAddr() string {
-	return LocalUser + "+" + RouteUnSubscribe + "@" + Hostname
+func (nl *Newsletter) PostmasterAddr() string {
+	return "postmaster@" + nl.Hostname
 }
 
-func SubscribeConfirmAddr() string {
-	return LocalUser + "+" + RouteSubscribeConfirm + "@" + Hostname
+func (nl *Newsletter) LocalUserAddr() string {
+	return nl.LocalUser + "@" + nl.Hostname
 }
 
-func SendConfirmAddr() string {
-	return LocalUser + "+" + RouteSendConfirm + "@" + Hostname
+func (nl *Newsletter) UnsubscribeAddr() string {
+	return nl.LocalUser + "+" + RouteUnSubscribe + "@" + nl.Hostname
+}
+
+func (nl *Newsletter) SubscribeConfirmAddr() string {
+	return nl.LocalUser + "+" + RouteSubscribeConfirm + "@" + nl.Hostname
+}
+
+func (nl *Newsletter) SendConfirmAddr() string {
+	return nl.LocalUser + "+" + RouteSendConfirm + "@" + nl.Hostname
 }
 
 func hashString(s string) string {
@@ -35,20 +69,20 @@ func hashString(s string) string {
 	return base32.StdEncoding.EncodeToString(sum[0:32])
 }
 
-func HashWithSecret(s string) string {
-	return hashString(s + Conf.Secret)
+func (nl *Newsletter) HashWithSecret(s string) string {
+	return hashString(s + nl.Config.Secret)
 }
 
 // generate a Message-ID
 // it's based on incoming mail From address and local .secret file content
-func GenerateId(hash string) string {
-	return LocalUser + "-" + hash + "@" + Hostname
+func (nl *Newsletter) GenerateId(hash string) string {
+	return nl.LocalUser + "-" + hash + "@" + nl.Hostname
 }
 
 // retrive hash from message-ID using the form: `USER-HASH@SERVER`
-func GetHashFromId(messageId string) (string, error) {
-	after, prefixFound := strings.CutPrefix(messageId, LocalUser+"-")
-	before, suffixFound := strings.CutSuffix(after, "@"+Hostname)
+func (nl *Newsletter) GetHashFromId(messageId string) (string, error) {
+	after, prefixFound := strings.CutPrefix(messageId, nl.LocalUser+"-")
+	before, suffixFound := strings.CutSuffix(after, "@"+nl.Hostname)
 	if !prefixFound || !suffixFound {
 		return "", fmt.Errorf("message ID does'nt match generated ID form")
 	}
@@ -60,41 +94,41 @@ func Brackets(addr string) string {
 }
 
 // pre-fill the base mail with default values
-func DefaultMail(subject string, body string) *mailer.Mail {
-	if Conf.Settings.Title != "" {
-		subject = "[" + Conf.Settings.Title + "] " + subject
+func (nl *Newsletter) DefaultMail(subject string, body string) *mailer.Mail {
+	if nl.Config.Settings.Title != "" {
+		subject = "[" + nl.Config.Settings.Title + "] " + subject
 	}
 
-	if Conf.Signature != "" {
-		body = body + "\n\n-- \n" + Conf.Signature
+	if nl.Config.Signature != "" {
+		body = body + "\n\n-- \n" + nl.Config.Signature
 	}
 
 	return &mailer.Mail{
-		FromAddr:        LocalUser + "@" + Hostname,
-		FromName:        Conf.Settings.DisplayName,
-		ListUnsubscribe: fmt.Sprintf("<mailto:%s>", UnsubscribeAddr()),
+		FromAddr:        nl.LocalUser + "@" + nl.Hostname,
+		FromName:        nl.Config.Settings.DisplayName,
+		ListUnsubscribe: fmt.Sprintf("<mailto:%s>", nl.UnsubscribeAddr()),
 		Subject:         subject,
 		Body:            body,
 	}
 }
 
 // add a `(preview)` text after original subject
-func SendPreviewMail(mail *mailer.Mail) error {
-	mail.To = LocalUserAddr()
+func (nl *Newsletter) SendPreviewMail(mail *mailer.Mail) error {
+	mail.To = nl.LocalUserAddr()
 	mail.Subject += " (preview)"
 
 	err := mailer.Send(mail)
 	if err != nil {
 		return fmt.Errorf("could not send preview mail: %w", err)
 	}
-	fmt.Printf("📨 preview email send to %s\n", LocalUserAddr())
+	fmt.Printf("📨 preview email send to %s\n", nl.LocalUserAddr())
 	return nil
 }
 
 // send the newsletter to all the subscribed addresses
-func SendNews(mail *mailer.Mail) error {
+func (nl *Newsletter) SendNews(mail *mailer.Mail) error {
 	var errCount = 0
-	for _, address := range Conf.Emails {
+	for _, address := range nl.Config.Emails {
 		mail.To = address
 		err := mailer.Send(mail)
 		if err != nil {

@@ -18,6 +18,7 @@ import (
 const CmdName = "newsletter"
 
 var (
+	nl      *newsletter.Newsletter
 	verbose bool
 	yes     bool
 	preview bool
@@ -151,11 +152,11 @@ func setup() error {
 			huh.NewInput().
 				Title("Newsletter title ?").
 				Description("It will be visible before the subject inside square brackets").
-				Value(&newsletter.Conf.Settings.Title),
+				Value(&nl.Config.Settings.Title),
 			huh.NewInput().
 				Title("Sender displayed name").
 				Description("Newsletter sender's name").
-				Value(&newsletter.Conf.Settings.DisplayName),
+				Value(&nl.Config.Settings.DisplayName),
 		),
 		huh.NewGroup(
 			huh.NewSelect[string]().
@@ -165,26 +166,26 @@ func setup() error {
 					huh.NewOption("english", newsletter.LangEnglish),
 					huh.NewOption("french", newsletter.LangFrench),
 				).
-				Value(&newsletter.Conf.Settings.Language),
+				Value(&nl.Config.Settings.Language),
 		),
 		huh.NewGroup(
 			huh.NewText().
 				Title("Signature").
 				Description("newsletter's signature will be inserted under each newsletter").
-				Value(&newsletter.Conf.Signature),
+				Value(&nl.Config.Signature),
 		),
 	)
 	if err := setupForm.Run(); err != nil {
 		return fmt.Errorf("could not build setup form: %w", err)
 	}
-	err = newsletter.Conf.SaveSettings()
+	err = nl.Config.SaveSettings()
 	if err != nil {
 		return err
 	}
 	if verbose {
 		fmt.Printf("settings sucessfully saved to file %q\n", newsletter.SettingsFile)
 	}
-	err = newsletter.Conf.SaveSignature()
+	err = nl.Config.SaveSignature()
 	if err != nil {
 		return err
 	}
@@ -201,13 +202,13 @@ func send(args []string) error {
 		return err
 	}
 
-	mail := newsletter.DefaultMail(subject, body)
-	mail.Body += fmt.Sprintf("\n\nTo unsubscribe, send a mail to <%s>", newsletter.UnsubscribeAddr())
+	mail := nl.DefaultMail(subject, body)
+	mail.Body += fmt.Sprintf("\n\nTo unsubscribe, send a mail to <%s>", nl.UnsubscribeAddr())
 
-	addrCount := len(newsletter.Conf.Emails)
+	addrCount := len(nl.Config.Emails)
 
 	if !yes {
-		err = newsletter.SendPreviewMail(mail)
+		err = nl.SendPreviewMail(mail)
 		if err != nil {
 			return err
 		}
@@ -238,7 +239,7 @@ func send(args []string) error {
 
 	fmt.Print("sending")
 	var errCount = 0
-	for _, address := range newsletter.Conf.Emails {
+	for _, address := range nl.Config.Emails {
 		mail.To = address
 		err := mailer.Send(mail)
 		if err != nil {
@@ -297,7 +298,8 @@ func main() {
 		log.Fatalf("missing subcommand")
 	}
 
-	err := newsletter.ReadConfig()
+	var err error
+	nl, err = newsletter.InitNewsletter()
 	if err != nil {
 		log.Printf("init: %v", err)
 	}

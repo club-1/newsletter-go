@@ -11,7 +11,8 @@ type Message struct {
 }
 
 func (m Message) Print() string {
-	switch Conf.Settings.Language {
+	// TODO(nicolasp): make this configurable again
+	switch "fr" {
 	case LangEnglish:
 		return m.en
 	case LangFrench:
