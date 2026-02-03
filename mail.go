@@ -1,31 +1,14 @@
 package newsletter
 
 import (
-	"bytes"
 	"crypto/sha256"
 	"encoding/base32"
 	"fmt"
-	"mime/quotedprintable"
-	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/club-1/newsletter-go/mailx"
 )
-
-type Mail struct {
-	FromAddr        string
-	FromName        string
-	To              string
-	Id              string
-	InReplyTo       string
-	ReplyTo         string
-	ListUnsubscribe string
-	Subject         string
-	Body            string
-}
-
-func (m *Mail) From() string {
-	return m.FromName + " <" + m.FromAddr + ">"
-}
 
 func PostmasterAddr() string {
 	return "postmaster@" + Hostname
@@ -76,63 +59,8 @@ func Brackets(addr string) string {
 	return "<" + addr + ">"
 }
 
-func quotedPrintable(s string) (string, error) {
-	var ac bytes.Buffer
-	w := quotedprintable.NewWriter(&ac)
-	_, err := w.Write([]byte(s))
-	if err != nil {
-		return "", err
-	}
-	err = w.Close()
-	if err != nil {
-		return "", err
-	}
-	return ac.String(), nil
-}
-
-func SendMail(mail *Mail) error {
-	if mail.To == "" {
-		return fmt.Errorf("no recipient address found")
-	}
-
-	encodedBody, err := quotedPrintable(mail.Body)
-	if err != nil {
-		return fmt.Errorf("could not encode body: %w", err)
-	}
-
-	args := []string{
-		"-s", mail.Subject,
-		"-r", mail.From(),
-		"-a", "Content-Transfer-Encoding: quoted-printable",
-		"-a", "Content-Type: text/plain; charset=UTF-8",
-	}
-	if mail.Id != "" {
-		args = append(args, "-a", "Message-Id: "+mail.Id)
-	}
-	if mail.InReplyTo != "" {
-		args = append(args, "-a", "In-Reply-To: "+mail.InReplyTo)
-	}
-	if mail.ReplyTo != "" {
-		args = append(args, "-a", "Reply-To: "+mail.ReplyTo)
-	}
-	if mail.ListUnsubscribe != "" {
-		args = append(args, "-a", "List-Unsubscribe: "+mail.ListUnsubscribe)
-	}
-	args = append(args, "--", mail.To)
-
-	cmd := exec.Command("mailx", args...)
-	cmd.Stdin = strings.NewReader(encodedBody)
-	var out strings.Builder
-	cmd.Stdout = &out
-	err = cmd.Run()
-	if err != nil {
-		return fmt.Errorf("could not execute command: %w %s", err, out.String())
-	}
-	return nil
-}
-
 // pre-fill the base mail with default values
-func DefaultMail(subject string, body string) *Mail {
+func DefaultMail(subject string, body string) *mailx.Mail {
 	if Conf.Settings.Title != "" {
 		subject = "[" + Conf.Settings.Title + "] " + subject
 	}
@@ -141,7 +69,7 @@ func DefaultMail(subject string, body string) *Mail {
 		body = body + "\n\n-- \n" + Conf.Signature
 	}
 
-	return &Mail{
+	return &mailx.Mail{
 		FromAddr:        LocalUser + "@" + Hostname,
 		FromName:        Conf.Settings.DisplayName,
 		ListUnsubscribe: fmt.Sprintf("<mailto:%s>", UnsubscribeAddr()),
@@ -151,11 +79,11 @@ func DefaultMail(subject string, body string) *Mail {
 }
 
 // add a `(preview)` text after original subject
-func SendPreviewMail(mail *Mail) error {
+func SendPreviewMail(mail *mailx.Mail) error {
 	mail.To = LocalUserAddr()
 	mail.Subject += " (preview)"
 
-	err := SendMail(mail)
+	err := mailx.Send(mail)
 	if err != nil {
 		return fmt.Errorf("could not send preview mail: %w", err)
 	}
@@ -164,11 +92,11 @@ func SendPreviewMail(mail *Mail) error {
 }
 
 // send the newsletter to all the subscribed addresses
-func SendNews(mail *Mail) error {
+func SendNews(mail *mailx.Mail) error {
 	var errCount = 0
 	for _, address := range Conf.Emails {
 		mail.To = address
-		err := SendMail(mail)
+		err := mailx.Send(mail)
 		if err != nil {
 			errCount++
 		}

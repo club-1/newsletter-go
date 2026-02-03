@@ -1,4 +1,4 @@
-package newsletter_test
+package mailx_test
 
 import (
 	"os"
@@ -6,36 +6,18 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/club-1/newsletter-go"
+	"github.com/club-1/newsletter-go/mailx"
 )
 
-func readConfig(t *testing.T, path string) {
-	t.Helper()
-	prevConfigPath := newsletter.ConfigPath
-	t.Cleanup(func() { newsletter.ConfigPath = prevConfigPath })
-	home, err := os.UserHomeDir()
-	if err != nil {
-		t.Fatalf("read test config: get home dir: %v", err)
-	}
-	relPath, err := filepath.Rel(home, path)
-	if err != nil {
-		t.Fatalf("read test config: create path: %v", err)
-	}
-	newsletter.ConfigPath = relPath
-	if err := newsletter.ReadConfig(); err != nil {
-		t.Fatalf("read test config: %v", err)
-	}
-}
-
-func TestSendMail(t *testing.T) {
+func TestSend(t *testing.T) {
 	cases := []struct {
 		name     string
-		mail     *newsletter.Mail
+		mail     *mailx.Mail
 		expected []string
 	}{
 		{
 			"basic",
-			&newsletter.Mail{
+			&mailx.Mail{
 				FromAddr: "nouvelles@club1.fr",
 				FromName: "Nouvelles de CLUB1",
 				To:       "test@gmail.com",
@@ -52,25 +34,23 @@ func TestSendMail(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			subTestSendMail(t, c.mail, c.expected)
+			subTestSend(t, c.mail, c.expected)
 		})
 	}
 }
 
-func subTestSendMail(t *testing.T, mail *newsletter.Mail, expected []string) {
+func subTestSend(t *testing.T, mail *mailx.Mail, expected []string) {
 	tmp := t.TempDir()
 	testdata, err := filepath.Abs("testdata")
 	if err != nil {
 		t.Fatal(err)
 	}
 	path := filepath.Join(testdata, "bin")
-	// configPath := filepath.Join(testdata, "config_basic")
 	mailxCmdOut := filepath.Join(tmp, "mailx_cmd")
-	// readConfig(t, configPath)
 	t.Setenv("PATH", path)
 	t.Setenv("MAILX_CMD_OUT", mailxCmdOut)
 
-	if err := newsletter.SendMail(mail); err != nil {
+	if err := mailx.Send(mail); err != nil {
 		t.Errorf("call SendMail: %v", err)
 	}
 
