@@ -12,14 +12,15 @@ import (
 )
 
 type Mail struct {
-	FromAddr  string
-	FromName  string
-	To        string
-	Id        string
-	InReplyTo string
-	ReplyTo   string
-	Subject   string
-	Body      string
+	FromAddr        string
+	FromName        string
+	To              string
+	Id              string
+	InReplyTo       string
+	ReplyTo         string
+	ListUnsubscribe string
+	Subject         string
+	Body            string
 }
 
 func (m *Mail) From() string {
@@ -102,7 +103,6 @@ func SendMail(mail *Mail) error {
 	args := []string{
 		"-s", mail.Subject,
 		"-r", mail.From(),
-		"-a", fmt.Sprintf("List-Unsubscribe: <mailto:%s>", UnsubscribeAddr()),
 		"-a", "Content-Transfer-Encoding: quoted-printable",
 		"-a", "Content-Type: text/plain; charset=UTF-8",
 	}
@@ -114,6 +114,9 @@ func SendMail(mail *Mail) error {
 	}
 	if mail.ReplyTo != "" {
 		args = append(args, "-a", "Reply-To: "+mail.ReplyTo)
+	}
+	if mail.ListUnsubscribe != "" {
+		args = append(args, "-a", "List-Unsubscribe: "+mail.ListUnsubscribe)
 	}
 	args = append(args, "--", mail.To)
 
@@ -139,10 +142,11 @@ func DefaultMail(subject string, body string) *Mail {
 	}
 
 	return &Mail{
-		FromAddr: LocalUser + "@" + Hostname,
-		FromName: Conf.Settings.DisplayName,
-		Subject:  subject,
-		Body:     body,
+		FromAddr:        LocalUser + "@" + Hostname,
+		FromName:        Conf.Settings.DisplayName,
+		ListUnsubscribe: fmt.Sprintf("<mailto:%s>", UnsubscribeAddr()),
+		Subject:         subject,
+		Body:            body,
 	}
 }
 

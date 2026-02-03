@@ -44,9 +44,6 @@ func TestSendMail(t *testing.T) {
 			[]string{
 				`-s Le\\ sujet`,
 				`-r Nouvelles\\ de\\ CLUB1\\ \\<nouvelles@club1.fr\\>`,
-				// FIXME(nicolasp): I don't think this flag should always be set.
-				// IMO it should be part of the *Mail struct to be able to set it or not.
-				// `-a List-Unsubscribe:\\ \\<mailto:\w+\+unsubscribe@\w+\\>`,
 				`-a Content-Transfer-Encoding:\\ quoted-printable`,
 				`-a Content-Type:\\ text/plain\\;\\ charset=UTF-8`,
 				`-- test@gmail.com`,
@@ -67,9 +64,9 @@ func subTestSendMail(t *testing.T, mail *newsletter.Mail, expected []string) {
 		t.Fatal(err)
 	}
 	path := filepath.Join(testdata, "bin")
-	configPath := filepath.Join(testdata, "config_basic")
+	// configPath := filepath.Join(testdata, "config_basic")
 	mailxCmdOut := filepath.Join(tmp, "mailx_cmd")
-	readConfig(t, configPath)
+	// readConfig(t, configPath)
 	t.Setenv("PATH", path)
 	t.Setenv("MAILX_CMD_OUT", mailxCmdOut)
 
