@@ -1,0 +1,3 @@
+#!/bin/bash
+# This fake mailx command prints its calling command line to $MAILX_CMD_OUT
+(printf "mailx"; printf ' %q' "$@") > $MAILX_CMD_OUT
