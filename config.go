@@ -176,7 +176,7 @@ func InitConfig(configDir string) (*Config, error) {
 		if err != nil {
 			return nil, fmt.Errorf("could not get secret: %w", err)
 		}
-		secret = string(secretB)
+		secret = strings.TrimSpace(string(secretB))
 	}
 
 	var settings Settings
