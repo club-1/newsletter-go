@@ -18,7 +18,7 @@ func TestInitConfig(t *testing.T) {
 			"basic",
 			&newsletter.Config{
 				Emails: []string{},
-				Secret: "BASIC_SECRET\n",
+				Secret: "BASIC_SECRET",
 				Settings: newsletter.Settings{
 					Title:       "Title",
 					DisplayName: "Display Name",
