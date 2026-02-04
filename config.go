@@ -17,7 +17,6 @@ import (
 )
 
 const (
-	ConfigPath    string = ".config/newsletter"
 	EmailsFile    string = "emails"
 	SecretFile    string = ".secret"
 	SignatureFile string = "signature.txt"
@@ -43,7 +42,7 @@ type Settings struct {
 }
 
 type Config struct {
-	HomeDir   string
+	Dir       string
 	Emails    []string
 	Secret    string
 	Signature string
@@ -65,7 +64,7 @@ func (c *Config) Subscribe(addr string) error {
 }
 
 func (c *Config) saveEmails() error {
-	emailsFilePath := filepath.Join(c.HomeDir, ConfigPath, EmailsFile)
+	emailsFilePath := filepath.Join(c.Dir, EmailsFile)
 	err := writeLines(c.Emails, emailsFilePath)
 	if err != nil {
 		return fmt.Errorf("could not save emails: %w", err)
@@ -74,7 +73,7 @@ func (c *Config) saveEmails() error {
 }
 
 func (c *Config) SaveSignature() error {
-	signatureFilePath := filepath.Join(c.HomeDir, ConfigPath, SignatureFile)
+	signatureFilePath := filepath.Join(c.Dir, SignatureFile)
 	err := os.WriteFile(signatureFilePath, []byte(c.Signature), 0660)
 	if err != nil {
 		return fmt.Errorf("could not save signature: %w", err)
@@ -83,7 +82,7 @@ func (c *Config) SaveSignature() error {
 }
 
 func (c *Config) SaveSettings() error {
-	settingsFilePath := filepath.Join(c.HomeDir, ConfigPath, SettingsFile)
+	settingsFilePath := filepath.Join(c.Dir, SettingsFile)
 	settingsJson, err := json.Marshal(c.Settings)
 	if err != nil {
 		return fmt.Errorf("could not encode settings JSON: %w", err)
@@ -130,16 +129,15 @@ func randString() string {
 	return string(dst)
 }
 
-// InitConfig returns a new [*Config] loaded from the given homeDir.
-func InitConfig(homeDir string) (*Config, error) {
-	configDir := filepath.Join(homeDir, ConfigPath)
+// InitConfig returns a new [*Config] loaded from the given configDir.
+func InitConfig(configDir string) (*Config, error) {
 	err := os.MkdirAll(configDir, 0775)
 	if err != nil {
 		return nil, fmt.Errorf("could not init config directory: %w", err)
 	}
 
 	var emails []string
-	emailsFilePath := filepath.Join(homeDir, ConfigPath, EmailsFile)
+	emailsFilePath := filepath.Join(configDir, EmailsFile)
 	_, err = os.Stat(emailsFilePath)
 	if errors.Is(err, os.ErrNotExist) {
 		emails = []string{}
@@ -151,7 +149,7 @@ func InitConfig(homeDir string) (*Config, error) {
 	}
 
 	var signature string
-	signatureFilePath := filepath.Join(homeDir, ConfigPath, SignatureFile)
+	signatureFilePath := filepath.Join(configDir, SignatureFile)
 	_, err = os.Stat(signatureFilePath)
 	if errors.Is(err, os.ErrNotExist) {
 		signature = ""
@@ -164,7 +162,7 @@ func InitConfig(homeDir string) (*Config, error) {
 	}
 
 	var secret string
-	secretFilePath := filepath.Join(homeDir, ConfigPath, SecretFile)
+	secretFilePath := filepath.Join(configDir, SecretFile)
 	_, err = os.Stat(secretFilePath)
 	if errors.Is(err, os.ErrNotExist) {
 		secret = randString()
@@ -182,7 +180,7 @@ func InitConfig(homeDir string) (*Config, error) {
 	}
 
 	var settings Settings
-	settingsFilePath := filepath.Join(homeDir, ConfigPath, SettingsFile)
+	settingsFilePath := filepath.Join(configDir, SettingsFile)
 	_, err = os.Stat(settingsFilePath)
 	if errors.Is(err, os.ErrNotExist) {
 		settings = Settings{}
@@ -206,7 +204,7 @@ func InitConfig(homeDir string) (*Config, error) {
 	}
 
 	return &Config{
-		HomeDir:   homeDir,
+		Dir:       configDir,
 		Emails:    emails,
 		Signature: signature,
 		Secret:    secret,

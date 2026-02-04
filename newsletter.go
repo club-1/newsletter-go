@@ -6,10 +6,15 @@ import (
 	"fmt"
 	"os"
 	"os/user"
+	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/club-1/newsletter-go/mailer"
+)
+
+const (
+	ConfigPath = ".config/newsletter"
 )
 
 type Newsletter struct {
@@ -32,7 +37,7 @@ func InitNewsletter() (*Newsletter, error) {
 		return nil, fmt.Errorf("could not get local user: %w", err)
 	}
 
-	config, err := InitConfig(user.HomeDir)
+	config, err := InitConfig(filepath.Join(user.HomeDir, ConfigPath))
 	if err != nil {
 		return nil, fmt.Errorf("could not init config: %w", err)
 	}
