@@ -11,7 +11,7 @@ import (
 	"slices"
 
 	"github.com/club-1/newsletter-go"
-	"github.com/club-1/newsletter-go/mailx"
+	"github.com/club-1/newsletter-go/mailer"
 
 	"github.com/mnako/letters"
 )
@@ -36,7 +36,7 @@ func sysLogInfo(msg string) {
 }
 
 // base response mail directed toward recieved From address
-func response(subject string, body string) *mailx.Mail {
+func response(subject string, body string) *mailer.Mail {
 	mail := newsletter.DefaultMail(subject, body)
 
 	messageId := string(incomingEmail.Headers.MessageID)
@@ -49,7 +49,7 @@ func response(subject string, body string) *mailx.Mail {
 // Send standard response and log
 func sendResponse(subject string, body string) {
 	mail := response(subject, body)
-	err := mailx.Send(mail)
+	err := mailer.Send(mail)
 	if err != nil {
 		msg := fmt.Sprintf("error while sending response mail: %v", err)
 		sysLogErr(msg)
@@ -78,7 +78,7 @@ func subscribe() error {
 	mail := response(Messages.ConfirmSubscription_subject.Print(), responseBody)
 	mail.ReplyTo = newsletter.SubscribeConfirmAddr()
 	mail.Id = fmt.Sprintf("<%s>", newsletter.GenerateId(newsletter.HashWithSecret(fromAddr)))
-	mailx.Send(mail)
+	mailer.Send(mail)
 
 	msg := fmt.Sprintf("subscription confirmation mail sent to %q", fromAddr)
 	sysLogInfo(msg)

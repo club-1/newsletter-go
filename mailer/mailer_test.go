@@ -1,4 +1,4 @@
-package mailx_test
+package mailer_test
 
 import (
 	"os"
@@ -6,18 +6,18 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/club-1/newsletter-go/mailx"
+	"github.com/club-1/newsletter-go/mailer"
 )
 
 func TestSend(t *testing.T) {
 	cases := []struct {
 		name     string
-		mail     *mailx.Mail
+		mail     *mailer.Mail
 		expected []string
 	}{
 		{
 			"basic",
-			&mailx.Mail{
+			&mailer.Mail{
 				FromAddr: "nouvelles@club1.fr",
 				FromName: "Nouvelles de CLUB1",
 				To:       "test@gmail.com",
@@ -39,7 +39,7 @@ func TestSend(t *testing.T) {
 	}
 }
 
-func subTestSend(t *testing.T, mail *mailx.Mail, expected []string) {
+func subTestSend(t *testing.T, mail *mailer.Mail, expected []string) {
 	tmp := t.TempDir()
 	testdata, err := filepath.Abs("testdata")
 	if err != nil {
@@ -50,7 +50,7 @@ func subTestSend(t *testing.T, mail *mailx.Mail, expected []string) {
 	t.Setenv("PATH", path)
 	t.Setenv("MAILX_CMD_OUT", mailxCmdOut)
 
-	if err := mailx.Send(mail); err != nil {
+	if err := mailer.Send(mail); err != nil {
 		t.Errorf("call SendMail: %v", err)
 	}
 

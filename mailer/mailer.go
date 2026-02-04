@@ -1,4 +1,4 @@
-package mailx
+package mailer
 
 import (
 	"bytes"

@@ -12,7 +12,7 @@ import (
 
 	"github.com/charmbracelet/huh"
 	"github.com/club-1/newsletter-go"
-	"github.com/club-1/newsletter-go/mailx"
+	"github.com/club-1/newsletter-go/mailer"
 )
 
 const CmdName = "newsletter"
@@ -68,7 +68,7 @@ func getSubjectBody(args []string) (string, string, error) {
 	return args[0], string(bodyB), nil
 }
 
-func printPreview(mail *mailx.Mail) {
+func printPreview(mail *mailer.Mail) {
 	fmt.Print("================ PREVIEW START ================\n")
 	fmt.Print("┌---- Header ------\n")
 	fmt.Printf("| Subject: %s\n", mail.Subject)
@@ -240,7 +240,7 @@ func send(args []string) error {
 	var errCount = 0
 	for _, address := range newsletter.Conf.Emails {
 		mail.To = address
-		err := mailx.Send(mail)
+		err := mailer.Send(mail)
 		if err != nil {
 			errCount++
 			fmt.Print("x")

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/club-1/newsletter-go/mailx"
+	"github.com/club-1/newsletter-go/mailer"
 )
 
 func PostmasterAddr() string {
@@ -60,7 +60,7 @@ func Brackets(addr string) string {
 }
 
 // pre-fill the base mail with default values
-func DefaultMail(subject string, body string) *mailx.Mail {
+func DefaultMail(subject string, body string) *mailer.Mail {
 	if Conf.Settings.Title != "" {
 		subject = "[" + Conf.Settings.Title + "] " + subject
 	}
@@ -69,7 +69,7 @@ func DefaultMail(subject string, body string) *mailx.Mail {
 		body = body + "\n\n-- \n" + Conf.Signature
 	}
 
-	return &mailx.Mail{
+	return &mailer.Mail{
 		FromAddr:        LocalUser + "@" + Hostname,
 		FromName:        Conf.Settings.DisplayName,
 		ListUnsubscribe: fmt.Sprintf("<mailto:%s>", UnsubscribeAddr()),
@@ -79,11 +79,11 @@ func DefaultMail(subject string, body string) *mailx.Mail {
 }
 
 // add a `(preview)` text after original subject
-func SendPreviewMail(mail *mailx.Mail) error {
+func SendPreviewMail(mail *mailer.Mail) error {
 	mail.To = LocalUserAddr()
 	mail.Subject += " (preview)"
 
-	err := mailx.Send(mail)
+	err := mailer.Send(mail)
 	if err != nil {
 		return fmt.Errorf("could not send preview mail: %w", err)
 	}
@@ -92,11 +92,11 @@ func SendPreviewMail(mail *mailx.Mail) error {
 }
 
 // send the newsletter to all the subscribed addresses
-func SendNews(mail *mailx.Mail) error {
+func SendNews(mail *mailer.Mail) error {
 	var errCount = 0
 	for _, address := range Conf.Emails {
 		mail.To = address
-		err := mailx.Send(mail)
+		err := mailer.Send(mail)
 		if err != nil {
 			errCount++
 		}
