@@ -38,11 +38,11 @@ import (
 const CmdName = "newsletter"
 
 var (
-	nl      *newsletter.Newsletter
-	verbose bool
-	yes     bool
-	preview bool
-	help    bool
+	nl          *newsletter.Newsletter
+	flagVerbose bool
+	flagYes     bool
+	flagPreview bool
+	flagHelp    bool
 )
 
 func getCmdPrefix() (string, error) {
@@ -116,7 +116,7 @@ func initForwardFiles() error {
 		filePath := filepath.Join(homeDir, fileName)
 		_, err = os.Stat(filePath)
 		if errors.Is(err, os.ErrNotExist) {
-			if verbose {
+			if flagVerbose {
 				fmt.Printf("writting file %q\n", filePath)
 			}
 
@@ -145,7 +145,7 @@ func stop() error {
 	for _, route := range newsletter.Routes {
 		fileName := ".forward+" + route
 		filePath := filepath.Join(homeDir, fileName)
-		if verbose {
+		if flagVerbose {
 			fmt.Printf("deleting file %q\n", filePath)
 		}
 
@@ -202,14 +202,14 @@ func setup() error {
 	if err != nil {
 		return err
 	}
-	if verbose {
+	if flagVerbose {
 		fmt.Printf("settings sucessfully saved to file %q\n", newsletter.SettingsFile)
 	}
 	err = nl.Config.SaveSignature()
 	if err != nil {
 		return err
 	}
-	if verbose {
+	if flagVerbose {
 		fmt.Printf("signature sucessfully saved to file %q\n", newsletter.SignatureFile)
 	}
 	fmt.Println("💾 saved !")
@@ -227,13 +227,13 @@ func send(args []string) error {
 
 	addrCount := len(nl.Config.Emails)
 
-	if !yes {
+	if !flagYes {
 		err = nl.SendPreviewMail(mail)
 		if err != nil {
 			return err
 		}
 
-		if preview {
+		if flagPreview {
 			os.Exit(0)
 		}
 
@@ -292,14 +292,14 @@ Usage: newsletter [OPTION]... setup
 Options:`
 
 func main() {
-	flag.BoolVar(&verbose, "v", false, "verbose: increase verbosity of program")
-	flag.BoolVar(&yes, "y", false, "yes: always answer yes when program ask for confirmation")
-	flag.BoolVar(&preview, "p", false, "preview: limit to a preview (cannot by used with -y)")
-	flag.BoolVar(&help, "h", false, "shorthand for -help")
-	flag.BoolVar(&help, "help", false, "show help message")
+	flag.BoolVar(&flagVerbose, "v", false, "verbose: increase verbosity of program")
+	flag.BoolVar(&flagYes, "y", false, "yes: always answer yes when program ask for confirmation")
+	flag.BoolVar(&flagPreview, "p", false, "preview: limit to a preview (cannot by used with -y)")
+	flag.BoolVar(&flagHelp, "h", false, "shorthand for -help")
+	flag.BoolVar(&flagHelp, "help", false, "show help message")
 	flag.Parse()
 
-	if help {
+	if flagHelp {
 		fmt.Println(banner)
 		fmt.Println(usage)
 		flag.CommandLine.SetOutput(os.Stdout)
@@ -309,7 +309,7 @@ func main() {
 
 	log.SetFlags(0) // remove all logger flags (remove timestamp)
 
-	if yes && preview {
+	if flagYes && flagPreview {
 		log.Fatalf("illegal combination: -y and -p connot be used at the same time")
 	}
 
