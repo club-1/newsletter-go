@@ -30,9 +30,9 @@ import (
 	"time"
 
 	"github.com/charmbracelet/huh"
-	"github.com/club-1/newsletter-go"
-	"github.com/club-1/newsletter-go/mailer"
-	"github.com/club-1/newsletter-go/messages"
+	"github.com/club-1/newsletter-go/v3"
+	"github.com/club-1/newsletter-go/v3/mailer"
+	"github.com/club-1/newsletter-go/v3/messages"
 )
 
 const CmdName = "newsletter"

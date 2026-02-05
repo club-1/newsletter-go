@@ -25,7 +25,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/club-1/newsletter-go/mailer"
+	"github.com/club-1/newsletter-go/v3/mailer"
 )
 
 func TestSend(t *testing.T) {

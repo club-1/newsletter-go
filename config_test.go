@@ -24,8 +24,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/club-1/newsletter-go"
-	"github.com/club-1/newsletter-go/messages"
+	"github.com/club-1/newsletter-go/v3"
+	"github.com/club-1/newsletter-go/v3/messages"
 )
 
 func TestInitConfig(t *testing.T) {

@@ -29,7 +29,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/club-1/newsletter-go/mailer"
+	"github.com/club-1/newsletter-go/v3/mailer"
 )
 
 const (

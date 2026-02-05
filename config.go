@@ -32,7 +32,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/club-1/newsletter-go/messages"
+	"github.com/club-1/newsletter-go/v3/messages"
 )
 
 const (

@@ -1,4 +1,4 @@
-module github.com/club-1/newsletter-go
+module github.com/club-1/newsletter-go/v3
 
 go 1.23.0
 
