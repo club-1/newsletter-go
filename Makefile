@@ -1,5 +1,6 @@
 -include .env
 
+VERSION     ?= $(shell git describe --tags --always)
 BINS        := bin/newsletter sbin/newsletterctl
 REMOTE      ?= club1.fr
 REMOTE_PATH ?= /var/tmp/nlgo
@@ -7,7 +8,7 @@ REMOTE_PATH ?= /var/tmp/nlgo
 all: $(BINS)
 
 $(BINS):
-	CGO_ENABLED=0 go build -o $@ ./cmd/$(@F)
+	CGO_ENABLED=0 go build -o $@ -ldflags '-X main.version=$(VERSION)' ./cmd/$(@F)
 
 check: lint test
 

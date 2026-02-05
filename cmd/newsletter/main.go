@@ -37,12 +37,16 @@ import (
 
 const CmdName = "newsletter"
 
+// Set by the compiler
+var version = "unknown"
+
 var (
 	nl          *newsletter.Newsletter
 	flagVerbose bool
 	flagYes     bool
 	flagPreview bool
 	flagHelp    bool
+	flagVersion bool
 )
 
 func getCmdPrefix() (string, error) {
@@ -314,10 +318,16 @@ func main() {
 	flag.BoolVar(&flagPreview, "p", false, "preview: limit to a preview (cannot by used with -y)")
 	flag.BoolVar(&flagHelp, "h", false, "shorthand for -help")
 	flag.BoolVar(&flagHelp, "help", false, "show help message")
+	flag.BoolVar(&flagVersion, "version", false, "show version")
 	flag.Parse()
 
 	if flagHelp {
 		help()
+	}
+
+	if flagVersion {
+		fmt.Println(CmdName, version)
+		return
 	}
 
 	log.SetFlags(0) // remove all logger flags (remove timestamp)

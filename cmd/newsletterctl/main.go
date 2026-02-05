@@ -38,9 +38,13 @@ import (
 
 const CmdName = "newsletterctl"
 
+// Set by the compiler
+var version = "unknown"
+
 var (
 	sysLog        *syslog.Writer
 	nl            *newsletter.Newsletter
+	flagVersion   bool
 	incomingEmail letters.Email
 	fromAddr      string
 )
@@ -256,7 +260,14 @@ func sendConfirm() error {
 }
 
 func main() {
+	flag.BoolVar(&flagVersion, "version", false, "show version")
 	flag.Parse()
+
+	if flagVersion {
+		fmt.Println(CmdName, version)
+		return
+	}
+
 	args := flag.Args()
 	if len(args) < 1 {
 		log.Fatal("missing sub command")
