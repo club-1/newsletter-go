@@ -89,11 +89,9 @@ func Send(mail *Mail) error {
 
 	cmd := exec.Command("mailx", args...)
 	cmd.Stdin = strings.NewReader(encodedBody)
-	var out strings.Builder
-	cmd.Stdout = &out
-	err = cmd.Run()
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("execute command: %w %s", err, out.String())
+		return fmt.Errorf("execute command: %w: %s", err, out)
 	}
 	return nil
 }
