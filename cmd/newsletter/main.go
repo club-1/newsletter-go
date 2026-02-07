@@ -321,7 +321,7 @@ func main() {
 	var err error
 	nl, err = newsletter.New()
 	if err != nil {
-		log.Printf("init newsletter: %v", err)
+		log.Fatalf("init newsletter: %v", err)
 	}
 
 	var cmdErr error
