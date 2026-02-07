@@ -287,7 +287,7 @@ func send(args []string) error {
 const banner = "" +
 	"      __    __          __   /   __  _/_  _/_    __    __\n" +
 	"    /   ) /___)| /| /  (_ ` /  /___) /    /    /___) /   `\n" +
-	"___/___/_(___ _|/_|/__(__)_/__(___ _(_ __(_ __(___ _/____v3.0___"
+	"___/___/_(___ _|/_|/__(__)_/__(___ _(_ __(_ __(___ _/____%s___\n"
 
 const usage = `
 Usage: newsletter [OPTION]... setup
@@ -296,7 +296,7 @@ Usage: newsletter [OPTION]... setup
 Options:`
 
 func help() {
-	fmt.Println(banner)
+	fmt.Printf(banner, version)
 	flag.CommandLine.SetOutput(os.Stdout)
 	flag.Usage()
 	os.Exit(0)
