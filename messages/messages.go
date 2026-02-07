@@ -19,35 +19,6 @@
 
 package messages
 
-type Language string
-
-const (
-	LangEnglish Language = "en"
-	LangFrench  Language = "fr"
-)
-
-var language Language
-
-func SetLanguage(l Language) {
-	language = l
-}
-
-type Message struct {
-	en string
-	fr string
-}
-
-func (m Message) Print() string {
-	switch language {
-	case LangEnglish:
-		return m.en
-	case LangFrench:
-		return m.fr
-	default:
-		return m.en
-	}
-}
-
 var (
 	AlreadySubscribed_subject = Message{
 		en: "Already subscribed",
