@@ -64,7 +64,7 @@ func Send(mail *Mail) error {
 
 	encodedBody, err := quotedPrintable(mail.Body)
 	if err != nil {
-		return fmt.Errorf("could not encode body: %w", err)
+		return fmt.Errorf("encode body: %w", err)
 	}
 
 	args := []string{
@@ -93,7 +93,7 @@ func Send(mail *Mail) error {
 	cmd.Stdout = &out
 	err = cmd.Run()
 	if err != nil {
-		return fmt.Errorf("could not execute command: %w %s", err, out.String())
+		return fmt.Errorf("execute command: %w %s", err, out.String())
 	}
 	return nil
 }

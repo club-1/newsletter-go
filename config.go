@@ -152,7 +152,7 @@ func randString() string {
 func InitConfig(configDir string) (*Config, error) {
 	err := os.MkdirAll(configDir, 0775)
 	if err != nil {
-		return nil, fmt.Errorf("could not init config directory: %w", err)
+		return nil, fmt.Errorf("init config directory: %w", err)
 	}
 
 	var emails []string
@@ -163,7 +163,7 @@ func InitConfig(configDir string) (*Config, error) {
 	} else {
 		emails, err = readLines(emailsFilePath)
 		if err != nil {
-			return nil, fmt.Errorf("could not get emails: %w", err)
+			return nil, fmt.Errorf("get emails: %w", err)
 		}
 	}
 
@@ -175,7 +175,7 @@ func InitConfig(configDir string) (*Config, error) {
 	} else {
 		signatureB, err := os.ReadFile(signatureFilePath)
 		if err != nil {
-			return nil, fmt.Errorf("could not get signature: %w", err)
+			return nil, fmt.Errorf("get signature: %w", err)
 		}
 		signature = string(signatureB)
 	}
@@ -187,13 +187,13 @@ func InitConfig(configDir string) (*Config, error) {
 		secret = randString()
 		err := os.WriteFile(secretFilePath, []byte(secret+"\n"), 0660)
 		if err != nil {
-			return nil, fmt.Errorf("could not store generated secret: %w", err)
+			return nil, fmt.Errorf("store generated secret: %w", err)
 		}
 		log.Print("generated secret")
 	} else {
 		secretB, err := os.ReadFile(secretFilePath)
 		if err != nil {
-			return nil, fmt.Errorf("could not get secret: %w", err)
+			return nil, fmt.Errorf("get secret: %w", err)
 		}
 		secret = strings.TrimSpace(string(secretB))
 	}
@@ -205,20 +205,20 @@ func InitConfig(configDir string) (*Config, error) {
 		settings = Settings{}
 		settingsJson, err := json.Marshal(settings)
 		if err != nil {
-			return nil, fmt.Errorf("could not encode settings JSON: %w", err)
+			return nil, fmt.Errorf("encode settings JSON: %w", err)
 		}
 		err = os.WriteFile(settingsFilePath, settingsJson, 0660)
 		if err != nil {
-			return nil, fmt.Errorf("could not write settings: %w", err)
+			return nil, fmt.Errorf("write settings: %w", err)
 		}
 	} else {
 		settingsJson, err := os.ReadFile(settingsFilePath)
 		if err != nil {
-			return nil, fmt.Errorf("could not get settings: %w", err)
+			return nil, fmt.Errorf("get settings: %w", err)
 		}
 		err = json.Unmarshal(settingsJson, &settings)
 		if err != nil {
-			return nil, fmt.Errorf("could not decode settings: %w", err)
+			return nil, fmt.Errorf("decode settings: %w", err)
 		}
 	}
 

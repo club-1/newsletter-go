@@ -227,7 +227,7 @@ func sendConfirm() error {
 	} else {
 		bodyB, err := os.ReadFile(bodyFilePath)
 		if err != nil {
-			return fmt.Errorf("could read temporary body file: %w", err)
+			return fmt.Errorf("read temporary body file: %w", err)
 		}
 		body = string(bodyB)
 	}
@@ -239,7 +239,7 @@ func sendConfirm() error {
 	} else {
 		subjectB, err := os.ReadFile(subjectFilePath)
 		if err != nil {
-			return fmt.Errorf("could read temporary subject file: %w", err)
+			return fmt.Errorf("read temporary subject file: %w", err)
 		}
 		subject = string(subjectB)
 	}

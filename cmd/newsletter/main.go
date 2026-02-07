@@ -73,14 +73,14 @@ func getSubjectBody(args []string) (string, string, error) {
 		}
 		bodyB, err = io.ReadAll(os.Stdin)
 		if err != nil {
-			return "", "", fmt.Errorf("could not read content from STDIN: %w", err)
+			return "", "", fmt.Errorf("read content from STDIN: %w", err)
 		}
 
 	case 2:
 		bodyPath := args[1]
 		bodyB, err = os.ReadFile(bodyPath)
 		if err != nil {
-			return "", "", fmt.Errorf("could not load newsletter body: %w", err)
+			return "", "", fmt.Errorf("load newsletter body: %w", err)
 		}
 
 	default:
@@ -102,12 +102,12 @@ func printPreview(mail *mailer.Mail) {
 func initForwardFiles() error {
 	prefix, err := getCmdPrefix()
 	if err != nil {
-		return fmt.Errorf("could not get command prefix: %w", err)
+		return fmt.Errorf("get command prefix: %w", err)
 	}
 
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return fmt.Errorf("cannot get user home directory: %w", err)
+		return fmt.Errorf("get user home directory: %w", err)
 	}
 
 	errCount := 0
@@ -130,7 +130,7 @@ func initForwardFiles() error {
 		}
 	}
 	if errCount > 0 {
-		return fmt.Errorf("could not write %v file(s)", errCount)
+		return fmt.Errorf("write %v file(s)", errCount)
 	}
 	return nil
 }
@@ -138,7 +138,7 @@ func initForwardFiles() error {
 func stop() error {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return fmt.Errorf("cannot get user home directory: %w", err)
+		return fmt.Errorf("get user home directory: %w", err)
 	}
 
 	errCount := 0
@@ -156,7 +156,7 @@ func stop() error {
 		}
 	}
 	if errCount > 0 {
-		return fmt.Errorf("could not remove %v file(s)", errCount)
+		return fmt.Errorf("remove %v file(s)", errCount)
 	}
 	return nil
 }
@@ -196,7 +196,7 @@ func setup() error {
 		),
 	)
 	if err := setupForm.Run(); err != nil {
-		return fmt.Errorf("could not build setup form: %w", err)
+		return fmt.Errorf("build setup form: %w", err)
 	}
 	err = nl.Config.SaveSettings()
 	if err != nil {
@@ -249,7 +249,7 @@ func send(args []string) error {
 			),
 		)
 		if err := confirmForm.Run(); err != nil {
-			return fmt.Errorf("could not build confirm form: %w", err)
+			return fmt.Errorf("build confirm form: %w", err)
 		}
 		if !confirm {
 			fmt.Printf("❌ sending aborted\n")

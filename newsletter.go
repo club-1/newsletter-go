@@ -48,17 +48,17 @@ type Newsletter struct {
 func InitNewsletter() (*Newsletter, error) {
 	hostname, err := os.Hostname()
 	if err != nil {
-		return nil, fmt.Errorf("could not get hostname: %w", err)
+		return nil, fmt.Errorf("get hostname: %w", err)
 	}
 
 	user, err := user.Current()
 	if err != nil {
-		return nil, fmt.Errorf("could not get local user: %w", err)
+		return nil, fmt.Errorf("get local user: %w", err)
 	}
 
 	config, err := InitConfig(filepath.Join(user.HomeDir, ConfigPath))
 	if err != nil {
-		return nil, fmt.Errorf("could not init config: %w", err)
+		return nil, fmt.Errorf("init config: %w", err)
 	}
 
 	return &Newsletter{
@@ -108,7 +108,7 @@ func (nl *Newsletter) GetHashFromId(messageId string) (string, error) {
 	after, prefixFound := strings.CutPrefix(messageId, nl.LocalUser+"-")
 	before, suffixFound := strings.CutSuffix(after, "@"+nl.Hostname)
 	if !prefixFound || !suffixFound {
-		return "", fmt.Errorf("message ID does'nt match generated ID form")
+		return "", fmt.Errorf("message ID doesn't match generated ID form")
 	}
 	return before, nil
 }
@@ -143,7 +143,7 @@ func (nl *Newsletter) SendPreviewMail(mail *mailer.Mail) error {
 
 	err := mailer.Send(mail)
 	if err != nil {
-		return fmt.Errorf("could not send preview mail: %w", err)
+		return fmt.Errorf("send preview mail: %w", err)
 	}
 	fmt.Printf("📨 preview email send to %s\n", nl.LocalUserAddr())
 	return nil
