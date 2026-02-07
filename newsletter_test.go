@@ -61,6 +61,16 @@ func TestNew(t *testing.T) {
 	}
 }
 
+// DummyMailer is a [mailer.Mailer] that calls its underlying Handler upon Send().
+type DummyMailer struct {
+	Handler func(m *mailer.Mail) error
+}
+
+// Send implements [mailer.Mailer].
+func (m *DummyMailer) Send(mail *mailer.Mail) error {
+	return m.Handler(mail)
+}
+
 func fakeNewsletter() *newsletter.Newsletter {
 	return &newsletter.Newsletter{
 		Config: &newsletter.Config{
@@ -96,5 +106,33 @@ Bye bye`,
 	}
 	if !reflect.DeepEqual(mail, expected) {
 		t.Errorf("expected:\n%#v\ngot:\n%#v", expected, mail)
+	}
+}
+
+func TestSendPreviewMail(t *testing.T) {
+	var actual *mailer.Mail
+	nl := fakeNewsletter()
+	nl.Mailer = &DummyMailer{func(mail *mailer.Mail) error {
+		actual = mail
+		return nil
+	}}
+
+	mail := &mailer.Mail{
+		FromAddr: "user@club1.fr",
+		Subject:  "Coucou les loulous",
+	}
+	expected := &mailer.Mail{
+		FromAddr: "user@club1.fr",
+		Subject:  "Coucou les loulous (preview)",
+		To:       "user@club1.fr",
+	}
+
+	err := nl.SendPreviewMail(mail)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	if !reflect.DeepEqual(actual, expected) {
+		t.Errorf("expected:\n%#v\ngot:\n%#v", expected, actual)
 	}
 }
