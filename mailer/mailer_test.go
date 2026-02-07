@@ -20,6 +20,7 @@
 package mailer_test
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -28,7 +29,23 @@ import (
 	"github.com/club-1/newsletter-go/v3/mailer"
 )
 
-func TestSend(t *testing.T) {
+func setupMailx(t *testing.T) (cmdPath, stdinPath string) {
+	t.Helper()
+	tmp := t.TempDir()
+	testdata, err := filepath.Abs("testdata")
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(testdata, "bin")
+	cmdPath = filepath.Join(tmp, "mailx_cmd")
+	stdinPath = filepath.Join(tmp, "mailx_stdin")
+	t.Setenv("PATH", path)
+	t.Setenv("MAILX_CMD", cmdPath)
+	t.Setenv("MAILX_STDIN", stdinPath)
+	return
+}
+
+func TestSendFlags(t *testing.T) {
 	cases := []struct {
 		name     string
 		mail     *mailer.Mail
@@ -59,23 +76,15 @@ func TestSend(t *testing.T) {
 }
 
 func subTestSend(t *testing.T, mail *mailer.Mail, expected []string) {
-	tmp := t.TempDir()
-	testdata, err := filepath.Abs("testdata")
-	if err != nil {
-		t.Fatal(err)
-	}
-	path := filepath.Join(testdata, "bin")
-	mailxCmdOut := filepath.Join(tmp, "mailx_cmd")
-	t.Setenv("PATH", path)
-	t.Setenv("MAILX_CMD_OUT", mailxCmdOut)
+	mailxCmdPath, _ := setupMailx(t)
 
 	if err := mailer.Send(mail); err != nil {
 		t.Errorf("call SendMail: %v", err)
 	}
 
-	mailxCmd, err := os.ReadFile(mailxCmdOut)
+	mailxCmd, err := os.ReadFile(mailxCmdPath)
 	if err != nil {
-		t.Errorf("read mailx_cmd: %v", err)
+		t.Errorf("read mailx cmd: %v", err)
 	}
 
 	for _, e := range expected {
@@ -86,5 +95,32 @@ func subTestSend(t *testing.T, mail *mailer.Mail, expected []string) {
 		if !match {
 			t.Errorf("expected:\n%s\nto match:\n%s", mailxCmd, e)
 		}
+	}
+}
+
+func TestSendBody(t *testing.T) {
+	_, mailxStdinPath := setupMailx(t)
+
+	mail := &mailer.Mail{
+		FromAddr: "nouvelles@club1.fr",
+		FromName: "Nouvelles de CLUB1",
+		To:       "test@gmail.com",
+		Subject:  "Le sujet",
+		Body:     "Coucou, ça dit quoi ?",
+	}
+
+	expected := []byte("Coucou, =C3=A7a dit quoi ?")
+
+	if err := mailer.Send(mail); err != nil {
+		t.Errorf("call SendMail: %v", err)
+	}
+
+	t.Log(mailxStdinPath)
+	mailxStdin, err := os.ReadFile(mailxStdinPath)
+	if err != nil {
+		t.Errorf("read mailx stdin: %v", err)
+	}
+	if !bytes.Equal(mailxStdin, expected) {
+		t.Errorf("expected:\n%s\ngot:\n%s", expected, mailxStdin)
 	}
 }

@@ -1,3 +1,5 @@
 #!/bin/bash
-# This fake mailx command prints its calling command line to $MAILX_CMD_OUT
-(printf "mailx"; printf ' %q' "$@") > $MAILX_CMD_OUT
+# This fake mailx command prints its calling command line to $MAILX_CMD
+# and copies its standard input to $MAILX_STDIN
+(printf "mailx"; printf ' %q' "$@") > $MAILX_CMD
+printf "%s" "$(</dev/stdin)" > $MAILX_STDIN
