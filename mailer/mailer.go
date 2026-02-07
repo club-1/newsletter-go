@@ -19,13 +19,6 @@
 
 package mailer
 
-import (
-	"bytes"
-	"fmt"
-	"mime/quotedprintable"
-	"os/exec"
-)
-
 type Mail struct {
 	FromAddr        string
 	FromName        string
@@ -42,55 +35,19 @@ func (m *Mail) From() string {
 	return m.FromName + " <" + m.FromAddr + ">"
 }
 
-func quotedPrintable(s string) (*bytes.Buffer, error) {
-	var buf bytes.Buffer
-	w := quotedprintable.NewWriter(&buf)
-	_, err := w.Write([]byte(s))
-	if err != nil {
-		return nil, err
-	}
-	err = w.Close()
-	if err != nil {
-		return nil, err
-	}
-	return &buf, nil
+type Mailer interface {
+	Send(m *Mail) error
 }
 
+var defaultMailer Mailer = &mailxMailer{}
+
+func Default() Mailer {
+	return defaultMailer
+}
+
+// Send sends a mail using the default [Mailer].
+//
+// Deprecated: use [Default()] to get a usable [Mailer] instead.
 func Send(mail *Mail) error {
-	if mail.To == "" {
-		return fmt.Errorf("no recipient address found")
-	}
-
-	encodedBody, err := quotedPrintable(mail.Body)
-	if err != nil {
-		return fmt.Errorf("encode body: %w", err)
-	}
-
-	args := []string{
-		"-s", mail.Subject,
-		"-r", mail.From(),
-		"-a", "Content-Transfer-Encoding: quoted-printable",
-		"-a", "Content-Type: text/plain; charset=UTF-8",
-	}
-	if mail.Id != "" {
-		args = append(args, "-a", "Message-Id: "+mail.Id)
-	}
-	if mail.InReplyTo != "" {
-		args = append(args, "-a", "In-Reply-To: "+mail.InReplyTo)
-	}
-	if mail.ReplyTo != "" {
-		args = append(args, "-a", "Reply-To: "+mail.ReplyTo)
-	}
-	if mail.ListUnsubscribe != "" {
-		args = append(args, "-a", "List-Unsubscribe: "+mail.ListUnsubscribe)
-	}
-	args = append(args, "--", mail.To)
-
-	cmd := exec.Command("mailx", args...)
-	cmd.Stdin = encodedBody
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("execute command: %w: %s", err, out)
-	}
-	return nil
+	return defaultMailer.Send(mail)
 }

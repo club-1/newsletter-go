@@ -17,7 +17,7 @@
 //
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-package mailer_test
+package mailer
 
 import (
 	"bytes"
@@ -25,8 +25,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"testing"
-
-	"github.com/club-1/newsletter-go/v3/mailer"
 )
 
 func setupMailx(t *testing.T) (cmdPath, stdinPath string) {
@@ -45,15 +43,15 @@ func setupMailx(t *testing.T) (cmdPath, stdinPath string) {
 	return
 }
 
-func TestSendFlags(t *testing.T) {
+func TestMailxFlags(t *testing.T) {
 	cases := []struct {
 		name     string
-		mail     *mailer.Mail
+		mail     *Mail
 		expected []string
 	}{
 		{
 			"basic",
-			&mailer.Mail{
+			&Mail{
 				FromAddr: "nouvelles@club1.fr",
 				FromName: "Nouvelles de CLUB1",
 				To:       "test@gmail.com",
@@ -70,15 +68,16 @@ func TestSendFlags(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			subTestSend(t, c.mail, c.expected)
+			subTestMailxFlags(t, c.mail, c.expected)
 		})
 	}
 }
 
-func subTestSend(t *testing.T, mail *mailer.Mail, expected []string) {
+func subTestMailxFlags(t *testing.T, mail *Mail, expected []string) {
 	mailxCmdPath, _ := setupMailx(t)
+	mailx := &mailxMailer{}
 
-	if err := mailer.Send(mail); err != nil {
+	if err := mailx.Send(mail); err != nil {
 		t.Errorf("call SendMail: %v", err)
 	}
 
@@ -98,10 +97,11 @@ func subTestSend(t *testing.T, mail *mailer.Mail, expected []string) {
 	}
 }
 
-func TestSendBody(t *testing.T) {
+func TestMailxBody(t *testing.T) {
 	_, mailxStdinPath := setupMailx(t)
+	mailx := &mailxMailer{}
 
-	mail := &mailer.Mail{
+	mail := &Mail{
 		FromAddr: "nouvelles@club1.fr",
 		FromName: "Nouvelles de CLUB1",
 		To:       "test@gmail.com",
@@ -111,7 +111,7 @@ func TestSendBody(t *testing.T) {
 
 	expected := []byte("Coucou, =C3=A7a dit quoi ?")
 
-	if err := mailer.Send(mail); err != nil {
+	if err := mailx.Send(mail); err != nil {
 		t.Errorf("call SendMail: %v", err)
 	}
 
