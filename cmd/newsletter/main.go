@@ -291,7 +291,24 @@ Usage: newsletter [OPTION]... setup
 
 Options:`
 
+func help() {
+	fmt.Println(banner)
+	flag.CommandLine.SetOutput(os.Stdout)
+	flag.Usage()
+	os.Exit(0)
+}
+
+func cmdlineFatalf(format string, v ...any) {
+	log.Printf(format, v...)
+	flag.Usage()
+	os.Exit(2)
+}
+
 func main() {
+	flag.Usage = func() {
+		fmt.Fprintln(flag.CommandLine.Output(), usage)
+		flag.PrintDefaults()
+	}
 	flag.BoolVar(&flagVerbose, "v", false, "verbose: increase verbosity of program")
 	flag.BoolVar(&flagYes, "y", false, "yes: always answer yes when program ask for confirmation")
 	flag.BoolVar(&flagPreview, "p", false, "preview: limit to a preview (cannot by used with -y)")
@@ -300,22 +317,18 @@ func main() {
 	flag.Parse()
 
 	if flagHelp {
-		fmt.Println(banner)
-		fmt.Println(usage)
-		flag.CommandLine.SetOutput(os.Stdout)
-		flag.PrintDefaults()
-		return
+		help()
 	}
 
 	log.SetFlags(0) // remove all logger flags (remove timestamp)
 
 	if flagYes && flagPreview {
-		log.Fatalf("illegal combination: -y and -p connot be used at the same time")
+		cmdlineFatalf("illegal combination: -y and -p connot be used at the same time")
 	}
 
 	args := flag.Args()
 	if len(args) < 1 {
-		log.Fatalf("missing subcommand")
+		help()
 	}
 
 	var err error
@@ -334,7 +347,7 @@ func main() {
 	case "send":
 		cmdErr = send(args[1:])
 	default:
-		log.Fatalln("invalid sub command")
+		cmdlineFatalf("invalid sub command: %s", args[0])
 	}
 
 	if cmdErr != nil {
