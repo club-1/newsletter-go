@@ -45,7 +45,7 @@ type Newsletter struct {
 // New creates a new [Newsletter] instance and initialises it.
 // It reads the current user and its home directory than loads the config
 // from the filesystem.
-func InitNewsletter() (*Newsletter, error) {
+func New() (*Newsletter, error) {
 	hostname, err := os.Hostname()
 	if err != nil {
 		return nil, fmt.Errorf("get hostname: %w", err)
