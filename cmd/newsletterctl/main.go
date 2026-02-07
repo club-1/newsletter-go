@@ -39,18 +39,18 @@ import (
 const CmdName = "newsletterctl"
 
 var (
-	SysLog        *syslog.Writer
+	sysLog        *syslog.Writer
 	nl            *newsletter.Newsletter
 	incomingEmail letters.Email
 	fromAddr      string
 )
 
 func sysLogErr(msg string) {
-	SysLog.Err(fmt.Sprintf("%v: %v", nl.LocalUser, msg))
+	sysLog.Err(fmt.Sprintf("%v: %v", nl.LocalUser, msg))
 }
 
 func sysLogInfo(msg string) {
-	SysLog.Info(fmt.Sprintf("%v: %v", nl.LocalUser, msg))
+	sysLog.Info(fmt.Sprintf("%v: %v", nl.LocalUser, msg))
 }
 
 // base response mail directed toward recieved From address
@@ -263,7 +263,7 @@ func main() {
 	}
 
 	var err error
-	SysLog, err = syslog.New(syslog.LOG_USER, newsletter.LogIdentifier)
+	sysLog, err = syslog.New(syslog.LOG_USER, newsletter.LogIdentifier)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -271,7 +271,7 @@ func main() {
 	nl, err = newsletter.InitNewsletter()
 	if err != nil {
 		msg := fmt.Sprintf("init: %v", err)
-		SysLog.Crit(msg)
+		sysLog.Crit(msg)
 		os.Exit(1)
 	}
 	messages.SetLanguage(nl.Config.Settings.Language)
