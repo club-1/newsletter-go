@@ -24,7 +24,6 @@ import (
 	"fmt"
 	"mime/quotedprintable"
 	"os/exec"
-	"strings"
 )
 
 type Mail struct {
@@ -43,18 +42,18 @@ func (m *Mail) From() string {
 	return m.FromName + " <" + m.FromAddr + ">"
 }
 
-func quotedPrintable(s string) (string, error) {
-	var ac bytes.Buffer
-	w := quotedprintable.NewWriter(&ac)
+func quotedPrintable(s string) (*bytes.Buffer, error) {
+	var buf bytes.Buffer
+	w := quotedprintable.NewWriter(&buf)
 	_, err := w.Write([]byte(s))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	err = w.Close()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return ac.String(), nil
+	return &buf, nil
 }
 
 func Send(mail *Mail) error {
@@ -88,7 +87,7 @@ func Send(mail *Mail) error {
 	args = append(args, "--", mail.To)
 
 	cmd := exec.Command("mailx", args...)
-	cmd.Stdin = strings.NewReader(encodedBody)
+	cmd.Stdin = encodedBody
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("execute command: %w: %s", err, out)
