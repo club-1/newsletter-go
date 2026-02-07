@@ -43,8 +43,9 @@ type Newsletter struct {
 }
 
 // New creates a new [Newsletter] instance and initialises it.
-// It reads the current user and its home directory than loads the config
-// from the filesystem.
+//
+// It reads information about the system, the current user and its config
+// directory, then loads the config from the filesystem.
 func New() (*Newsletter, error) {
 	hostname, err := os.Hostname()
 	if err != nil {
@@ -56,7 +57,12 @@ func New() (*Newsletter, error) {
 		return nil, fmt.Errorf("get local user: %w", err)
 	}
 
-	config, err := InitConfig(filepath.Join(user.HomeDir, ConfigPath))
+	homeDir := os.Getenv("HOME")
+	if homeDir == "" {
+		homeDir = user.HomeDir
+	}
+
+	config, err := InitConfig(filepath.Join(homeDir, ConfigPath))
 	if err != nil {
 		return nil, fmt.Errorf("init config: %w", err)
 	}
