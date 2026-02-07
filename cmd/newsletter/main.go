@@ -319,9 +319,9 @@ func main() {
 	}
 
 	var err error
-	nl, err = newsletter.InitNewsletter()
+	nl, err = newsletter.New()
 	if err != nil {
-		log.Printf("init: %v", err)
+		log.Printf("init newsletter: %v", err)
 	}
 
 	var cmdErr error

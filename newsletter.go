@@ -42,7 +42,7 @@ type Newsletter struct {
 	LocalUser string
 }
 
-// InitNewsletter initialises everything needed for the newsletter program.
+// New creates a new [Newsletter] instance and initialises it.
 // It reads the current user and its home directory than loads the config
 // from the filesystem.
 func InitNewsletter() (*Newsletter, error) {

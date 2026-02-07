@@ -268,9 +268,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	nl, err = newsletter.InitNewsletter()
+	nl, err = newsletter.New()
 	if err != nil {
-		msg := fmt.Sprintf("init: %v", err)
+		msg := fmt.Sprintf("init newsletter: %v", err)
 		sysLog.Crit(msg)
 		os.Exit(1)
 	}
