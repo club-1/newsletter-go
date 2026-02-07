@@ -115,7 +115,6 @@ func TestSendBody(t *testing.T) {
 		t.Errorf("call SendMail: %v", err)
 	}
 
-	t.Log(mailxStdinPath)
 	mailxStdin, err := os.ReadFile(mailxStdinPath)
 	if err != nil {
 		t.Errorf("read mailx stdin: %v", err)
