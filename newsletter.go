@@ -40,6 +40,7 @@ type Newsletter struct {
 	Config    *Config
 	Hostname  string
 	LocalUser string
+	Mailer    mailer.Mailer
 }
 
 // New creates a new [Newsletter] instance and initialises it.
@@ -71,6 +72,7 @@ func New() (*Newsletter, error) {
 		Config:    config,
 		Hostname:  hostname,
 		LocalUser: user.Username,
+		Mailer:    mailer.Default(),
 	}, nil
 }
 
@@ -147,7 +149,7 @@ func (nl *Newsletter) SendPreviewMail(mail *mailer.Mail) error {
 	mail.To = nl.LocalUserAddr()
 	mail.Subject += " (preview)"
 
-	err := mailer.Send(mail)
+	err := nl.Mailer.Send(mail)
 	if err != nil {
 		return fmt.Errorf("send preview mail: %w", err)
 	}
@@ -160,7 +162,7 @@ func (nl *Newsletter) SendNews(mail *mailer.Mail) error {
 	var errCount = 0
 	for _, address := range nl.Config.Emails {
 		mail.To = address
-		err := mailer.Send(mail)
+		err := nl.Mailer.Send(mail)
 		if err != nil {
 			errCount++
 		}
