@@ -27,6 +27,7 @@ import (
 
 	"github.com/club-1/newsletter-go/v3"
 	"github.com/club-1/newsletter-go/v3/mailer"
+	"github.com/club-1/newsletter-go/v3/mailer/mailertest"
 	"github.com/club-1/newsletter-go/v3/messages"
 )
 
@@ -59,16 +60,6 @@ func TestNew(t *testing.T) {
 	if nl.LocalUser == "" {
 		t.Errorf("expected non empty LocalUser")
 	}
-}
-
-// DummyMailer is a [mailer.Mailer] that calls its underlying Handler upon Send().
-type DummyMailer struct {
-	Handler func(m *mailer.Mail) error
-}
-
-// Send implements [mailer.Mailer].
-func (m *DummyMailer) Send(mail *mailer.Mail) error {
-	return m.Handler(mail)
 }
 
 func fakeNewsletter() *newsletter.Newsletter {
@@ -112,7 +103,7 @@ Bye bye`,
 func TestSendPreviewMail(t *testing.T) {
 	var actual *mailer.Mail
 	nl := fakeNewsletter()
-	nl.Mailer = &DummyMailer{func(mail *mailer.Mail) error {
+	nl.Mailer = &mailertest.Mailer{Handler: func(mail *mailer.Mail) error {
 		actual = mail
 		return nil
 	}}
