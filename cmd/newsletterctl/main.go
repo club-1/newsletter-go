@@ -23,6 +23,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"log/syslog"
 	"os"
@@ -257,6 +258,19 @@ func sendConfirm() error {
 	return nil
 }
 
+func parseEmail(r io.Reader) (mail letters.Email, fromAddr string, err error) {
+	mail, err = letters.ParseEmail(r)
+	if err != nil {
+		return
+	}
+	if len(mail.Headers.From) == 0 {
+		err = errors.New("no From header")
+		return
+	}
+	fromAddr = mail.Headers.From[0].Address
+	return
+}
+
 func main() {
 	flag.BoolVar(&flagVersion, "version", false, "show version")
 	flag.Parse()
@@ -285,20 +299,14 @@ func main() {
 	}
 	messages.SetLanguage(nl.Config.Settings.Language)
 
-	incomingEmail, err = letters.ParseEmail(os.Stdin)
-	if err != nil {
-		sysLogErrf("error while parsing input email: %v", err)
-		os.Exit(1)
-	}
-
 	cmdErrPrefix := fmt.Sprintf("recieved mail to route %q", args[0])
 
-	if len(incomingEmail.Headers.From) == 0 {
-		sysLogErrf("%s without From header", cmdErrPrefix)
+	incomingEmail, fromAddr, err = parseEmail(os.Stdin)
+	if err != nil {
+		sysLogErrf("%s: %v", cmdErrPrefix, err)
 		os.Exit(1)
 	}
 
-	fromAddr = incomingEmail.Headers.From[0].Address
 	cmdErrPrefix += fmt.Sprintf(" from %q", fromAddr)
 
 	var cmdErr error
