@@ -171,7 +171,7 @@ func unsubscribe() error {
 
 func send() error {
 	if fromAddr != nl.LocalUserAddr() {
-		return fmt.Errorf("email From does'nt match user address")
+		return fmt.Errorf("email From doesn't match user address")
 	}
 
 	body := incomingEmail.Text
@@ -203,7 +203,7 @@ func send() error {
 
 func sendConfirm() error {
 	if fromAddr != nl.LocalUserAddr() {
-		return fmt.Errorf("email From header does'nt match user address")
+		return fmt.Errorf("email From header doesn't match user address")
 	}
 
 	if len(incomingEmail.Headers.InReplyTo) == 0 {
