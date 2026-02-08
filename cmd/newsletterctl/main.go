@@ -71,7 +71,7 @@ func response(subject string, body string) *mailer.Mail {
 // Send standard response and log
 func sendResponse(subject string, body string) {
 	mail := response(subject, body)
-	err := mailer.Send(mail)
+	err := nl.Mailer.Send(mail)
 	if err != nil {
 		sysLogErrf("error while sending response mail: %v", err)
 	} else {
@@ -98,7 +98,11 @@ func subscribe() error {
 	mail := response(messages.ConfirmSubscription_subject.Print(), responseBody)
 	mail.ReplyTo = nl.SubscribeConfirmAddr()
 	mail.Id = fmt.Sprintf("<%s>", nl.GenerateId(nl.HashWithSecret(fromAddr)))
-	mailer.Send(mail)
+
+	err := nl.Mailer.Send(mail)
+	if err != nil {
+		return fmt.Errorf("send response mail: %v", err)
+	}
 
 	sysLogInfof("subscription confirmation mail sent to %q", fromAddr)
 	return nil

@@ -265,7 +265,7 @@ func send(args []string) error {
 	var errCount = 0
 	for _, address := range nl.Config.Emails {
 		mail.To = address
-		err := mailer.Send(mail)
+		err := nl.Mailer.Send(mail)
 		if err != nil {
 			errCount++
 			fmt.Print("x")
