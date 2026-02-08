@@ -54,6 +54,10 @@ func sysLogErrf(format string, v ...any) {
 	sysLog.Err(nl.LocalUser + ": " + fmt.Sprintf(format, v...))
 }
 
+func sysLogWarningf(format string, v ...any) {
+	sysLog.Warning(nl.LocalUser + ": " + fmt.Sprintf(format, v...))
+}
+
 func sysLogInfof(format string, v ...any) {
 	sysLog.Info(nl.LocalUser + ": " + fmt.Sprintf(format, v...))
 }
@@ -82,11 +86,12 @@ func sendResponse(subject string, body string) {
 
 func subscribe() error {
 	if slices.Contains(nl.Config.Emails, fromAddr) {
+		sysLogWarningf("subscribe: address is already subscribed: %s", fromAddr)
 		sendResponse(
 			messages.AlreadySubscribed_subject.Print(),
 			fmt.Sprintf(messages.AlreadySubscribed_body.Print(), nl.PostmasterAddr()),
 		)
-		return fmt.Errorf("already subscribed")
+		return nil
 	}
 
 	var responseBody string
@@ -111,11 +116,12 @@ func subscribe() error {
 
 func subscribeConfirm() error {
 	if slices.Contains(nl.Config.Emails, fromAddr) {
+		sysLogWarningf("subscribe-confirm: address is already subscribed: %s", fromAddr)
 		sendResponse(
 			messages.AlreadySubscribed_subject.Print(),
 			fmt.Sprintf(messages.AlreadySubscribed_body.Print(), nl.PostmasterAddr()),
 		)
-		return fmt.Errorf("already subscribed")
+		return nil
 	}
 
 	if len(incomingEmail.Headers.InReplyTo) == 0 {
@@ -150,7 +156,12 @@ func subscribeConfirm() error {
 
 func unsubscribe() error {
 	err := nl.Config.Unsubscribe(fromAddr)
-	if err != nil {
+	switch {
+	case err == nil:
+		sysLogInfof("address %q removed from subscribers", fromAddr)
+	case errors.Is(err, newsletter.ErrNotSubscribed):
+		sysLogWarningf("unsubscribe: address is not subscribed: %s", fromAddr)
+	default:
 		var responseBody string
 		if nl.Config.Settings.Title == "" {
 			responseBody = fmt.Sprintf(messages.UnsubscriptionFailedAlt_body.Print(), nl.LocalUser, nl.LocalUserAddr())
@@ -160,8 +171,6 @@ func unsubscribe() error {
 		sendResponse(messages.UnsubscriptionFailed_subject.Print(), responseBody)
 		return fmt.Errorf("could not unsubscribe: %w", err)
 	}
-
-	sysLogInfof("address %q removed from subscribers", fromAddr)
 
 	var responseBody string
 	if nl.Config.Settings.Title == "" {

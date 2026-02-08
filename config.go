@@ -54,6 +54,11 @@ var (
 	Routes = [...]string{RouteSubscribe, RouteSubscribeConfirm, RouteUnSubscribe, RouteSend, RouteSendConfirm}
 )
 
+// Some error values.
+var (
+	ErrNotSubscribed = errors.New("not subscribed")
+)
+
 type Settings struct {
 	Title       string
 	DisplayName string
@@ -71,7 +76,7 @@ type Config struct {
 func (c *Config) Unsubscribe(addr string) error {
 	index := slices.Index(c.Emails, addr)
 	if index == -1 {
-		return fmt.Errorf("not subscribed")
+		return ErrNotSubscribed
 	}
 	c.Emails = append(c.Emails[:index], c.Emails[index+1:]...)
 	return c.saveEmails()
