@@ -40,18 +40,6 @@ const (
 	SecretFile    string = ".secret"
 	SignatureFile string = "signature.txt"
 	SettingsFile  string = "settings.json"
-
-	RouteSubscribe        string = "subscribe"
-	RouteSubscribeConfirm string = "subscribe-confirm"
-	RouteUnSubscribe      string = "unsubscribe"
-	RouteSend             string = "send"
-	RouteSendConfirm      string = "send-confirm"
-
-	LogIdentifier string = "newsletter"
-)
-
-var (
-	Routes = [...]string{RouteSubscribe, RouteSubscribeConfirm, RouteUnSubscribe, RouteSend, RouteSendConfirm}
 )
 
 // Some error values.

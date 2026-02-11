@@ -20,13 +20,10 @@
 package newsletter
 
 import (
-	"crypto/sha256"
-	"encoding/base32"
 	"fmt"
 	"os"
 	"os/user"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/club-1/newsletter-go/v3/mailer"
@@ -34,6 +31,16 @@ import (
 
 const (
 	ConfigPath = ".config/newsletter"
+
+	RouteSubscribe        = "subscribe"
+	RouteSubscribeConfirm = "subscribe-confirm"
+	RouteUnSubscribe      = "unsubscribe"
+	RouteSend             = "send"
+	RouteSendConfirm      = "send-confirm"
+)
+
+var (
+	Routes = [...]string{RouteSubscribe, RouteSubscribeConfirm, RouteUnSubscribe, RouteSend, RouteSendConfirm}
 )
 
 type Newsletter struct {
@@ -94,35 +101,6 @@ func (nl *Newsletter) SubscribeConfirmAddr() string {
 
 func (nl *Newsletter) SendConfirmAddr() string {
 	return nl.LocalUser + "+" + RouteSendConfirm + "@" + nl.Hostname
-}
-
-func hashString(s string) string {
-	sum := sha256.Sum256([]byte(s))
-	return base32.StdEncoding.EncodeToString(sum[0:32])
-}
-
-func (nl *Newsletter) HashWithSecret(s string) string {
-	return hashString(s + nl.Config.Secret)
-}
-
-// generate a Message-ID
-// it's based on incoming mail From address and local .secret file content
-func (nl *Newsletter) GenerateId(hash string) string {
-	return nl.LocalUser + "-" + hash + "@" + nl.Hostname
-}
-
-// retrive hash from message-ID using the form: `USER-HASH@SERVER`
-func (nl *Newsletter) GetHashFromId(messageId string) (string, error) {
-	after, prefixFound := strings.CutPrefix(messageId, nl.LocalUser+"-")
-	before, suffixFound := strings.CutSuffix(after, "@"+nl.Hostname)
-	if !prefixFound || !suffixFound {
-		return "", fmt.Errorf("message ID doesn't match generated ID form")
-	}
-	return before, nil
-}
-
-func Brackets(addr string) string {
-	return "<" + addr + ">"
 }
 
 // pre-fill the base mail with default values

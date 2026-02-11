@@ -17,48 +17,40 @@
 //
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-package main
+package control
 
 import (
-	"flag"
-	"fmt"
-	"log"
-	"os"
+	"errors"
+	"io"
+	"net/mail"
 
-	"github.com/club-1/newsletter-go/v3/control"
+	"github.com/mnako/letters"
 )
 
-const CmdName = "newsletterctl"
+// Request is an email received by the controller.
+//
+// It is a very basic wrapper around [letters.Email] that parses some
+// additional header fields that we always want to be valid.
+type Request struct {
+	letters.Email
+	From      *mail.Address
+	MessageID string
+}
 
-// Set by the compiler
-var version = "unknown"
-
-var (
-	flagVersion bool
-)
-
-func main() {
-	flag.BoolVar(&flagVersion, "version", false, "show version")
-	flag.Parse()
-
-	if flagVersion {
-		fmt.Println(CmdName, version)
-		return
-	}
-
-	args := flag.Args()
-	if len(args) < 1 {
-		log.Fatal("missing sub command")
-	}
-
-	controller, err := control.NewController()
+func ParseRequest(r io.Reader) (*Request, error) {
+	email, err := letters.ParseEmail(r)
 	if err != nil {
-		log.Fatalln("error:", err)
+		return nil, err
 	}
-
-	cmdErr := controller.Handle(args[0], os.Stdin)
-	if cmdErr != nil {
-		// do not send non-zero response code because otherwise
-		// it would answer an error feedback automatically by email
+	if len(email.Headers.From) == 0 {
+		return nil, errors.New(`"From" field missing from header or empty`)
 	}
+	if email.Headers.MessageID == "" {
+		return nil, errors.New(`"Message-ID" field missing from header or empty`)
+	}
+	return &Request{
+		Email:     email,
+		From:      email.Headers.From[0],
+		MessageID: string(email.Headers.MessageID),
+	}, nil
 }
