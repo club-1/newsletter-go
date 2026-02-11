@@ -17,7 +17,7 @@
 //
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-package main
+package control
 
 import (
 	"reflect"
@@ -28,7 +28,6 @@ import (
 	"github.com/club-1/newsletter-go/v3/mailer"
 	"github.com/club-1/newsletter-go/v3/mailer/mailertest"
 	"github.com/club-1/newsletter-go/v3/messages"
-	"github.com/mnako/letters"
 )
 
 func fakeNewsletter() *newsletter.Newsletter {
@@ -51,27 +50,12 @@ func fakeNewsletter() *newsletter.Newsletter {
 	}
 }
 
-func setupTest(t *testing.T, stdin string) *DummySyslog {
+func setupTest(t *testing.T) (*Controller, *DummySyslog) {
 	t.Helper()
-
-	var err error
 	syslog := &DummySyslog{}
-	logger = &Logger{Writer: syslog}
-	t.Cleanup(func() { logger = nil })
-
-	nl = fakeNewsletter()
-	t.Cleanup(func() { nl = nil })
-
-	incomingEmail, fromAddr, err = parseEmail(strings.NewReader(stdin))
-	if err != nil {
-		t.Fatalf("parse email: %v", err)
-	}
-	t.Cleanup(func() {
-		incomingEmail = letters.Email{}
-		fromAddr = ""
-	})
-
-	return syslog
+	logger := &Logger{Writer: syslog}
+	nl := fakeNewsletter()
+	return &Controller{log: logger, nl: nl}, syslog
 }
 
 func TestSubscribe(t *testing.T) {
@@ -81,15 +65,15 @@ Message-Id: <fakeid@club1.fr>
 Subject: Subscribe
 
 `
-	syslog := setupTest(t, stdin)
+	controller, syslog := setupTest(t)
 
 	var mail *mailer.Mail
-	nl.Mailer = &mailertest.Mailer{Handler: func(m *mailer.Mail) error {
+	controller.nl.Mailer = &mailertest.Mailer{Handler: func(m *mailer.Mail) error {
 		mail = m
 		return nil
 	}}
 
-	err := subscribe()
+	err := controller.Handle(newsletter.RouteSubscribe, strings.NewReader(stdin))
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
