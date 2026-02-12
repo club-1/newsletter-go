@@ -74,107 +74,170 @@ func handle(t *testing.T, route, stdin string) (*Controller, *DummySyslog, *mail
 	return controller, syslog, mail, err
 }
 
+type testCase struct {
+	name         string
+	stdin        string
+	expectedAddr string
+	expectedMail *mailer.Mail
+	expectedLog  string
+}
+
 func TestSubscribe(t *testing.T) {
-	route := newsletter.RouteSubscribe
-	stdin := `From: test@club1.fr
+	cases := []*testCase{
+		{
+			name: "basic",
+			stdin: `From: test@club1.fr
 To: user+subscribe@club1.fr
 Message-Id: <fakeid@club1.fr>
 Subject: Subscribe
+`,
+			expectedMail: &mailer.Mail{
+				FromAddr:        "user@club1.fr",
+				FromName:        "Display Name",
+				To:              "test@club1.fr",
+				Id:              "<user-NRGABAKKE6AKVXM5S7IJQOUFFOXC2B3UF5QWX5VYFAKBRNWHZBHQ====@club1.fr>",
+				InReplyTo:       "<fakeid@club1.fr>",
+				ReplyTo:         "user+subscribe-confirm@club1.fr",
+				ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
+				Subject:         "[Title] Please confirm your subsciption",
+				Body:            "Reply to this email to confirm that you want to subscribe to the newsletter [Title] (the content does not matter).\n\n-- \nBye bye",
+			},
+		},
+		{
+			name: "already subscribed",
+			stdin: `From: recipient@club1.fr
+To: user+subscribe@club1.fr
+Message-Id: <fakeid@club1.fr>
+Subject: Subscribe
+`,
+			expectedLog: `address is already subscribed: recipient@club1.fr`,
+			expectedMail: &mailer.Mail{
+				FromAddr:        "user@club1.fr",
+				FromName:        "Display Name",
+				To:              "recipient@club1.fr",
+				InReplyTo:       "<fakeid@club1.fr>",
+				ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
+				Subject:         "[Title] Already subscribed",
+				Body:            "Your email is already subscribed, if problem persist, contact <postmaster@club1.fr>.\n\n-- \nBye bye",
+			},
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			subTestSubscribe(t, c)
+		})
+	}
+}
 
-`
-	_, syslog, mail, err := handle(t, route, stdin)
+func subTestSubscribe(t *testing.T, tc *testCase) {
+	_, syslog, mail, err := handle(t, newsletter.RouteSubscribe, tc.stdin)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	// TODO: check syslog instead of just printing
-	t.Log(syslog.String())
-
-	expected := &mailer.Mail{
-		FromAddr:        "user@club1.fr",
-		FromName:        "Display Name",
-		To:              "test@club1.fr",
-		Id:              "<user-NRGABAKKE6AKVXM5S7IJQOUFFOXC2B3UF5QWX5VYFAKBRNWHZBHQ====@club1.fr>",
-		InReplyTo:       "<fakeid@club1.fr>",
-		ReplyTo:         "user+subscribe-confirm@club1.fr",
-		ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
-		Subject:         "[Title] Please confirm your subsciption",
-		Body:            "Reply to this email to confirm that you want to subscribe to the newsletter [Title] (the content does not matter).\n\n-- \nBye bye",
+	log := strings.TrimSpace(syslog.String())
+	if !strings.Contains(log, tc.expectedLog) {
+		t.Errorf("expected log to contain:\n%s\ngot:\n%s", tc.expectedLog, log)
 	}
-	if !reflect.DeepEqual(mail, expected) {
-		t.Errorf("expected mail:\n%#v\ngot:\n%#v", expected, mail)
+
+	if !reflect.DeepEqual(mail, tc.expectedMail) {
+		t.Errorf("expected mail:\n%#v\ngot:\n%#v", tc.expectedMail, mail)
 	}
 }
 
 func TestSubscribeConfirm(t *testing.T) {
-	route := newsletter.RouteSubscribeConfirm
-	stdin := `From: test@club1.fr
+	cases := []*testCase{
+		{
+			name: "basic",
+			stdin: `From: test@club1.fr
 To: user+subscribe-confirm@club1.fr
 Message-Id: <fakeid2@club1.fr>
 In-Reply-To: <user-NRGABAKKE6AKVXM5S7IJQOUFFOXC2B3UF5QWX5VYFAKBRNWHZBHQ====@club1.fr>
 Subject: Subscribe confirm
+`,
+			expectedAddr: "test@club1.fr",
+			expectedMail: &mailer.Mail{
+				FromAddr:        "user@club1.fr",
+				FromName:        "Display Name",
+				To:              "test@club1.fr",
+				InReplyTo:       "<fakeid2@club1.fr>",
+				ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
+				Subject:         "[Title] Subscription is successfull !",
+				Body:            "Your email has been successfully subscribed to the newsletter [Title].\n\n-- \nBye bye",
+			},
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			subTestSubscribeConfirm(t, c)
+		})
+	}
+}
 
-`
-	c, syslog, mail, err := handle(t, route, stdin)
+func subTestSubscribeConfirm(t *testing.T, tc *testCase) {
+	c, syslog, mail, err := handle(t, newsletter.RouteSubscribeConfirm, tc.stdin)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	// TODO: check syslog instead of just printing
-	t.Log(syslog.String())
-
-	expectedAddr := "test@club1.fr"
-	if !slices.Contains(c.nl.Config.Emails, expectedAddr) {
-		t.Errorf("expected %q to be subscribed, got %v", expectedAddr, c.nl.Config.Emails)
+	log := strings.TrimSpace(syslog.String())
+	if !strings.Contains(log, tc.expectedLog) {
+		t.Errorf("expected log to contain:\n%s\ngot:\n%s", tc.expectedLog, log)
 	}
 
-	expectedMail := &mailer.Mail{
-		FromAddr:        "user@club1.fr",
-		FromName:        "Display Name",
-		To:              "test@club1.fr",
-		InReplyTo:       "<fakeid2@club1.fr>",
-		ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
-		Subject:         "[Title] Subscription is successfull !",
-		Body:            "Your email has been successfully subscribed to the newsletter [Title].\n\n-- \nBye bye",
+	if !slices.Contains(c.nl.Config.Emails, tc.expectedAddr) {
+		t.Errorf("expected %q to be subscribed, got %v", tc.expectedAddr, c.nl.Config.Emails)
 	}
 
-	if !reflect.DeepEqual(mail, expectedMail) {
-		t.Errorf("expected mail:\n%#v\ngot:\n%#v", expectedMail, mail)
+	if !reflect.DeepEqual(mail, tc.expectedMail) {
+		t.Errorf("expected mail:\n%#v\ngot:\n%#v", tc.expectedMail, mail)
 	}
 }
 
 func TestUnsubscribe(t *testing.T) {
-	route := newsletter.RouteUnSubscribe
-	stdin := `From: recipient@club1.fr
-To: user+unsubscrib@club1.fr
+	cases := []*testCase{
+		{
+			name: "basic",
+			stdin: `From: recipient@club1.fr
+To: user+unsubscribe@club1.fr
 Message-Id: <fakeid@club1.fr>
 Subject: Unsubscribe
+`,
+			expectedAddr: "recipent@club1.fr",
+			expectedMail: &mailer.Mail{
+				FromAddr:        "user@club1.fr",
+				FromName:        "Display Name",
+				To:              "recipient@club1.fr",
+				InReplyTo:       "<fakeid@club1.fr>",
+				ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
+				Subject:         "[Title] Unsubscription is successfull",
+				Body:            "Your email has been successfully unsubscribed from the newsletter [Title].\n\n-- \nBye bye",
+			},
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			subTestUnsubscribe(t, c)
+		})
+	}
+}
 
-`
-	c, syslog, mail, err := handle(t, route, stdin)
+func subTestUnsubscribe(t *testing.T, tc *testCase) {
+	c, syslog, mail, err := handle(t, newsletter.RouteUnSubscribe, tc.stdin)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	// TODO: check syslog instead of just printing
-	t.Log(syslog.String())
-
-	expectedAddr := "recipent@club1.fr"
-	if slices.Contains(c.nl.Config.Emails, expectedAddr) {
-		t.Errorf("expected %q to be unsubscribed, got %v", expectedAddr, c.nl.Config.Emails)
+	log := strings.TrimSpace(syslog.String())
+	if !strings.Contains(log, tc.expectedLog) {
+		t.Errorf("expected log to contain:\n%s\ngot:\n%s", tc.expectedLog, log)
 	}
 
-	expectedMail := &mailer.Mail{
-		FromAddr:        "user@club1.fr",
-		FromName:        "Display Name",
-		To:              "recipient@club1.fr",
-		InReplyTo:       "<fakeid@club1.fr>",
-		ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
-		Subject:         "[Title] Unsubscription is successfull",
-		Body:            "Your email has been successfully unsubscribed from the newsletter [Title].\n\n-- \nBye bye",
+	if slices.Contains(c.nl.Config.Emails, tc.expectedAddr) {
+		t.Errorf("expected %q to be unsubscribed, got %v", tc.expectedAddr, c.nl.Config.Emails)
 	}
 
-	if !reflect.DeepEqual(mail, expectedMail) {
-		t.Errorf("expected mail:\n%#v\ngot:\n%#v", expectedMail, mail)
+	if !reflect.DeepEqual(mail, tc.expectedMail) {
+		t.Errorf("expected mail:\n%#v\ngot:\n%#v", tc.expectedMail, mail)
 	}
 }
