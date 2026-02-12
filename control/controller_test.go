@@ -142,3 +142,39 @@ Subject: Subscribe confirm
 		t.Errorf("expected mail:\n%#v\ngot:\n%#v", expectedMail, mail)
 	}
 }
+
+func TestUnsubscribe(t *testing.T) {
+	route := newsletter.RouteUnSubscribe
+	stdin := `From: recipient@club1.fr
+To: user+unsubscrib@club1.fr
+Message-Id: <fakeid@club1.fr>
+Subject: Unsubscribe
+
+`
+	c, syslog, mail, err := handle(t, route, stdin)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	// TODO: check syslog instead of just printing
+	t.Log(syslog.String())
+
+	expectedAddr := "recipent@club1.fr"
+	if slices.Contains(c.nl.Config.Emails, expectedAddr) {
+		t.Errorf("expected %q to be unsubscribed, got %v", expectedAddr, c.nl.Config.Emails)
+	}
+
+	expectedMail := &mailer.Mail{
+		FromAddr:        "user@club1.fr",
+		FromName:        "Display Name",
+		To:              "recipient@club1.fr",
+		InReplyTo:       "<fakeid@club1.fr>",
+		ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
+		Subject:         "[Title] Unsubscription is successfull",
+		Body:            "Your email has been successfully unsubscribed from the newsletter [Title].\n\n-- \nBye bye",
+	}
+
+	if !reflect.DeepEqual(mail, expectedMail) {
+		t.Errorf("expected mail:\n%#v\ngot:\n%#v", expectedMail, mail)
+	}
+}
