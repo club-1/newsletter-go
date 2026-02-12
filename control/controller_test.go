@@ -20,8 +20,8 @@
 package control
 
 import (
+	"path"
 	"reflect"
-	"slices"
 	"strings"
 	"testing"
 
@@ -75,17 +75,17 @@ func handle(t *testing.T, route, stdin string) (*Controller, *DummySyslog, *mail
 }
 
 type testCase struct {
-	name         string
-	stdin        string
-	expectedAddr string
-	expectedMail *mailer.Mail
-	expectedLog  string
+	name          string
+	stdin         string
+	expectedAddrs []string
+	expectedMail  *mailer.Mail
+	expectedLog   string
 }
 
-func TestSubscribe(t *testing.T) {
+func TestHandle(t *testing.T) {
 	cases := []*testCase{
 		{
-			name: "basic",
+			name: "subscribe/basic",
 			stdin: `From: test@club1.fr
 To: user+subscribe@club1.fr
 Message-Id: <fakeid@club1.fr>
@@ -104,7 +104,7 @@ Subject: Subscribe
 			},
 		},
 		{
-			name: "already subscribed",
+			name: "subscribe/already subscribed",
 			stdin: `From: recipient@club1.fr
 To: user+subscribe@club1.fr
 Message-Id: <fakeid@club1.fr>
@@ -121,41 +121,15 @@ Subject: Subscribe
 				Body:            "Your email is already subscribed, if problem persist, contact <postmaster@club1.fr>.\n\n-- \nBye bye",
 			},
 		},
-	}
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			subTestSubscribe(t, c)
-		})
-	}
-}
-
-func subTestSubscribe(t *testing.T, tc *testCase) {
-	_, syslog, mail, err := handle(t, newsletter.RouteSubscribe, tc.stdin)
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-
-	log := strings.TrimSpace(syslog.String())
-	if !strings.Contains(log, tc.expectedLog) {
-		t.Errorf("expected log to contain:\n%s\ngot:\n%s", tc.expectedLog, log)
-	}
-
-	if !reflect.DeepEqual(mail, tc.expectedMail) {
-		t.Errorf("expected mail:\n%#v\ngot:\n%#v", tc.expectedMail, mail)
-	}
-}
-
-func TestSubscribeConfirm(t *testing.T) {
-	cases := []*testCase{
 		{
-			name: "basic",
+			name: "subscribe-confirm/basic",
 			stdin: `From: test@club1.fr
 To: user+subscribe-confirm@club1.fr
 Message-Id: <fakeid2@club1.fr>
 In-Reply-To: <user-NRGABAKKE6AKVXM5S7IJQOUFFOXC2B3UF5QWX5VYFAKBRNWHZBHQ====@club1.fr>
 Subject: Subscribe confirm
 `,
-			expectedAddr: "test@club1.fr",
+			expectedAddrs: []string{"recipient@club1.fr", "test@club1.fr"},
 			expectedMail: &mailer.Mail{
 				FromAddr:        "user@club1.fr",
 				FromName:        "Display Name",
@@ -166,44 +140,14 @@ Subject: Subscribe confirm
 				Body:            "Your email has been successfully subscribed to the newsletter [Title].\n\n-- \nBye bye",
 			},
 		},
-	}
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			subTestSubscribeConfirm(t, c)
-		})
-	}
-}
-
-func subTestSubscribeConfirm(t *testing.T, tc *testCase) {
-	c, syslog, mail, err := handle(t, newsletter.RouteSubscribeConfirm, tc.stdin)
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-
-	log := strings.TrimSpace(syslog.String())
-	if !strings.Contains(log, tc.expectedLog) {
-		t.Errorf("expected log to contain:\n%s\ngot:\n%s", tc.expectedLog, log)
-	}
-
-	if !slices.Contains(c.nl.Config.Emails, tc.expectedAddr) {
-		t.Errorf("expected %q to be subscribed, got %v", tc.expectedAddr, c.nl.Config.Emails)
-	}
-
-	if !reflect.DeepEqual(mail, tc.expectedMail) {
-		t.Errorf("expected mail:\n%#v\ngot:\n%#v", tc.expectedMail, mail)
-	}
-}
-
-func TestUnsubscribe(t *testing.T) {
-	cases := []*testCase{
 		{
-			name: "basic",
+			name: "unsubscribe/basic",
 			stdin: `From: recipient@club1.fr
 To: user+unsubscribe@club1.fr
 Message-Id: <fakeid@club1.fr>
 Subject: Unsubscribe
 `,
-			expectedAddr: "recipent@club1.fr",
+			expectedAddrs: []string{},
 			expectedMail: &mailer.Mail{
 				FromAddr:        "user@club1.fr",
 				FromName:        "Display Name",
@@ -217,13 +161,14 @@ Subject: Unsubscribe
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			subTestUnsubscribe(t, c)
+			subTestHandle(t, c)
 		})
 	}
 }
 
-func subTestUnsubscribe(t *testing.T, tc *testCase) {
-	c, syslog, mail, err := handle(t, newsletter.RouteUnSubscribe, tc.stdin)
+func subTestHandle(t *testing.T, tc *testCase) {
+	route := path.Dir(tc.name)
+	c, syslog, mail, err := handle(t, route, tc.stdin)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
@@ -233,8 +178,10 @@ func subTestUnsubscribe(t *testing.T, tc *testCase) {
 		t.Errorf("expected log to contain:\n%s\ngot:\n%s", tc.expectedLog, log)
 	}
 
-	if slices.Contains(c.nl.Config.Emails, tc.expectedAddr) {
-		t.Errorf("expected %q to be unsubscribed, got %v", tc.expectedAddr, c.nl.Config.Emails)
+	if tc.expectedAddrs != nil {
+		if !reflect.DeepEqual(c.nl.Config.Emails, tc.expectedAddrs) {
+			t.Errorf("expected subscribed addrs:\n%#v\ngot:\n%#v", tc.expectedAddrs, c.nl.Config.Emails)
+		}
 	}
 
 	if !reflect.DeepEqual(mail, tc.expectedMail) {
