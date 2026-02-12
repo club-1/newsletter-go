@@ -61,24 +61,24 @@ func setupTest(t *testing.T) (*Controller, *DummySyslog) {
 	return &Controller{log: logger, nl: nl}, syslog
 }
 
-func handle(t *testing.T, route, stdin string) (*Controller, *DummySyslog, *mailer.Mail, error) {
+func handle(t *testing.T, route, stdin string) (*Controller, *DummySyslog, []mailer.Mail, error) {
 	controller, syslog := setupTest(t)
 
-	var mail *mailer.Mail
+	var mails []mailer.Mail
 	controller.nl.Mailer = &mailertest.Mailer{Handler: func(m *mailer.Mail) error {
-		mail = m
+		mails = append(mails, *m)
 		return nil
 	}}
 
 	err := controller.Handle(route, strings.NewReader(stdin))
-	return controller, syslog, mail, err
+	return controller, syslog, mails, err
 }
 
 type testCase struct {
 	name          string
 	stdin         string
 	expectedAddrs []string
-	expectedMail  *mailer.Mail
+	expectedMails []mailer.Mail
 	expectedLog   string
 }
 
@@ -91,7 +91,7 @@ To: user+subscribe@club1.fr
 Message-Id: <fakeid@club1.fr>
 Subject: Subscribe
 `,
-			expectedMail: &mailer.Mail{
+			expectedMails: []mailer.Mail{{
 				FromAddr:        "user@club1.fr",
 				FromName:        "Display Name",
 				To:              "test@club1.fr",
@@ -101,7 +101,7 @@ Subject: Subscribe
 				ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
 				Subject:         "[Title] Please confirm your subsciption",
 				Body:            "Reply to this email to confirm that you want to subscribe to the newsletter [Title] (the content does not matter).\n\n-- \nBye bye",
-			},
+			}},
 		},
 		{
 			name: "subscribe/already subscribed",
@@ -111,7 +111,7 @@ Message-Id: <fakeid@club1.fr>
 Subject: Subscribe
 `,
 			expectedLog: `address is already subscribed: recipient@club1.fr`,
-			expectedMail: &mailer.Mail{
+			expectedMails: []mailer.Mail{{
 				FromAddr:        "user@club1.fr",
 				FromName:        "Display Name",
 				To:              "recipient@club1.fr",
@@ -119,7 +119,7 @@ Subject: Subscribe
 				ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
 				Subject:         "[Title] Already subscribed",
 				Body:            "Your email is already subscribed, if problem persist, contact <postmaster@club1.fr>.\n\n-- \nBye bye",
-			},
+			}},
 		},
 		{
 			name: "subscribe-confirm/basic",
@@ -130,7 +130,7 @@ In-Reply-To: <user-NRGABAKKE6AKVXM5S7IJQOUFFOXC2B3UF5QWX5VYFAKBRNWHZBHQ====@club
 Subject: Subscribe confirm
 `,
 			expectedAddrs: []string{"recipient@club1.fr", "test@club1.fr"},
-			expectedMail: &mailer.Mail{
+			expectedMails: []mailer.Mail{{
 				FromAddr:        "user@club1.fr",
 				FromName:        "Display Name",
 				To:              "test@club1.fr",
@@ -138,7 +138,7 @@ Subject: Subscribe confirm
 				ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
 				Subject:         "[Title] Subscription is successfull !",
 				Body:            "Your email has been successfully subscribed to the newsletter [Title].\n\n-- \nBye bye",
-			},
+			}},
 		},
 		{
 			name: "unsubscribe/basic",
@@ -148,7 +148,7 @@ Message-Id: <fakeid@club1.fr>
 Subject: Unsubscribe
 `,
 			expectedAddrs: []string{},
-			expectedMail: &mailer.Mail{
+			expectedMails: []mailer.Mail{{
 				FromAddr:        "user@club1.fr",
 				FromName:        "Display Name",
 				To:              "recipient@club1.fr",
@@ -156,7 +156,28 @@ Subject: Unsubscribe
 				ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
 				Subject:         "[Title] Unsubscription is successfull",
 				Body:            "Your email has been successfully unsubscribed from the newsletter [Title].\n\n-- \nBye bye",
-			},
+			}},
+		},
+		{
+			name: "send/basic",
+			stdin: `From: user@club1.fr
+To: user+send@club1.fr
+Message-Id: <fakeid@club1.fr>
+Subject: Send
+
+Content of the mail!
+`,
+			expectedMails: []mailer.Mail{{
+				FromAddr:        "user@club1.fr",
+				FromName:        "Display Name",
+				To:              "user@club1.fr",
+				Id:              "user-KAV4QKP2PFXLWHG5XM3E6X23PROVB5DGNDSABUPA6XQIODZDJ6UA====@club1.fr",
+				InReplyTo:       "", // FIXME: shouldn't it be in reply to our message ID?
+				ReplyTo:         "user+send-confirm@club1.fr",
+				ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
+				Subject:         "[Title] Send (preview)",
+				Body:            "Content of the mail!\n\n-- \nBye bye\n\nTo unsubscribe, send a mail to <user+unsubscribe@club1.fr>(\n\nthis is a preview mail, if you want to confirm and send the newsletter to all the 1 subscribers, reply to this email)",
+			}},
 		},
 	}
 	for _, c := range cases {
@@ -184,7 +205,7 @@ func subTestHandle(t *testing.T, tc *testCase) {
 		}
 	}
 
-	if !reflect.DeepEqual(mail, tc.expectedMail) {
-		t.Errorf("expected mail:\n%#v\ngot:\n%#v", tc.expectedMail, mail)
+	if !reflect.DeepEqual(mail, tc.expectedMails) {
+		t.Errorf("expected mail:\n%#v\ngot:\n%#v", tc.expectedMails, mail)
 	}
 }
