@@ -189,6 +189,27 @@ Content of the mail!
 				Body:            "Content of the mail!\n\n-- \nBye bye\n\nTo unsubscribe, send a mail to <user+unsubscribe@club1.fr>(\n\nthis is a preview mail, if you want to confirm and send the newsletter to all the 1 subscribers, reply to this email)",
 			}},
 		},
+		{
+			name: "send-confirm/basic",
+			stdin: `From: user@club1.fr
+To: user+send-confirm@club1.fr
+Message-Id: <fakeid2@club1.fr>
+In-Reply-To: <user-KAV4QKP2PFXLWHG5XM3E6X23PROVB5DGNDSABUPA6XQIODZDJ6UA====@club1.fr>
+Subject: Send confirm
+`,
+			tmp: map[string]string{
+				"newsletter-send-KAV4QKP2PFXLWHG5XM3E6X23PROVB5DGNDSABUPA6XQIODZDJ6UA====.subject.txt": "Send",
+				"newsletter-send-KAV4QKP2PFXLWHG5XM3E6X23PROVB5DGNDSABUPA6XQIODZDJ6UA====.body.txt":    "Content of the mail!",
+			},
+			expectedMails: []mailer.Mail{{
+				FromAddr:        "user@club1.fr",
+				FromName:        "Display Name",
+				To:              "recipient@club1.fr",
+				ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
+				Subject:         "[Title] Send",
+				Body:            "Content of the mail!\n\n-- \nBye bye\n\nTo unsubscribe, send a mail to <user+unsubscribe@club1.fr>",
+			}},
+		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -201,7 +222,7 @@ func subTestHandle(t *testing.T, tc *testCase) {
 	for file, content := range tc.tmp {
 		path := filepath.Join(os.TempDir(), file)
 		if content != "" {
-			if err := os.WriteFile(path, []byte(content), 644); err != nil {
+			if err := os.WriteFile(path, []byte(content), 0644); err != nil {
 				t.Fatalf("setup tmp: %v", err)
 			}
 		}
