@@ -21,6 +21,7 @@ package control
 
 import (
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
@@ -30,10 +31,11 @@ import (
 	"github.com/club-1/newsletter-go/v3/messages"
 )
 
-func fakeNewsletter() *newsletter.Newsletter {
+func fakeNewsletter(t *testing.T) *newsletter.Newsletter {
+	t.Helper()
 	return &newsletter.Newsletter{
 		Config: &newsletter.Config{
-			Dir: "/home/user/.config/newsletter",
+			Dir: t.TempDir(),
 			Emails: []string{
 				"recipient@club1.fr",
 			},
@@ -41,7 +43,7 @@ func fakeNewsletter() *newsletter.Newsletter {
 			Settings: newsletter.Settings{
 				Title:       "Title",
 				DisplayName: "Display Name",
-				Language:    messages.LangFrench,
+				Language:    messages.LangEnglish,
 			},
 			Signature: "Bye bye",
 		},
@@ -54,17 +56,12 @@ func setupTest(t *testing.T) (*Controller, *DummySyslog) {
 	t.Helper()
 	syslog := &DummySyslog{}
 	logger := &Logger{Writer: syslog}
-	nl := fakeNewsletter()
+	nl := fakeNewsletter(t)
+	messages.SetLanguage(nl.Config.Settings.Language)
 	return &Controller{log: logger, nl: nl}, syslog
 }
 
-func TestSubscribe(t *testing.T) {
-	stdin := `From: test@club1.fr
-To: user+subscribe@club1.fr
-Message-Id: <fakeid@club1.fr>
-Subject: Subscribe
-
-`
+func handle(t *testing.T, route, stdin string) (*Controller, *DummySyslog, *mailer.Mail, error) {
 	controller, syslog := setupTest(t)
 
 	var mail *mailer.Mail
@@ -73,11 +70,24 @@ Subject: Subscribe
 		return nil
 	}}
 
-	err := controller.Handle(newsletter.RouteSubscribe, strings.NewReader(stdin))
+	err := controller.Handle(route, strings.NewReader(stdin))
+	return controller, syslog, mail, err
+}
+
+func TestSubscribe(t *testing.T) {
+	route := newsletter.RouteSubscribe
+	stdin := `From: test@club1.fr
+To: user+subscribe@club1.fr
+Message-Id: <fakeid@club1.fr>
+Subject: Subscribe
+
+`
+	_, syslog, mail, err := handle(t, route, stdin)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 
+	// TODO: check syslog instead of just printing
 	t.Log(syslog.String())
 
 	expected := &mailer.Mail{
@@ -93,5 +103,42 @@ Subject: Subscribe
 	}
 	if !reflect.DeepEqual(mail, expected) {
 		t.Errorf("expected mail:\n%#v\ngot:\n%#v", expected, mail)
+	}
+}
+
+func TestSubscribeConfirm(t *testing.T) {
+	route := newsletter.RouteSubscribeConfirm
+	stdin := `From: test@club1.fr
+To: user+subscribe-confirm@club1.fr
+Message-Id: <fakeid2@club1.fr>
+In-Reply-To: <user-NRGABAKKE6AKVXM5S7IJQOUFFOXC2B3UF5QWX5VYFAKBRNWHZBHQ====@club1.fr>
+Subject: Subscribe confirm
+
+`
+	c, syslog, mail, err := handle(t, route, stdin)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	// TODO: check syslog instead of just printing
+	t.Log(syslog.String())
+
+	expectedAddr := "test@club1.fr"
+	if !slices.Contains(c.nl.Config.Emails, expectedAddr) {
+		t.Errorf("expected %q to be subscribed, got %v", expectedAddr, c.nl.Config.Emails)
+	}
+
+	expectedMail := &mailer.Mail{
+		FromAddr:        "user@club1.fr",
+		FromName:        "Display Name",
+		To:              "test@club1.fr",
+		InReplyTo:       "<fakeid2@club1.fr>",
+		ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
+		Subject:         "[Title] Subscription is successfull !",
+		Body:            "Your email has been successfully subscribed to the newsletter [Title].\n\n-- \nBye bye",
+	}
+
+	if !reflect.DeepEqual(mail, expectedMail) {
+		t.Errorf("expected mail:\n%#v\ngot:\n%#v", expectedMail, mail)
 	}
 }
