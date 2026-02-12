@@ -20,7 +20,9 @@
 package control
 
 import (
+	"os"
 	"path"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -75,8 +77,12 @@ func handle(t *testing.T, route, stdin string) (*Controller, *DummySyslog, []mai
 }
 
 type testCase struct {
-	name          string
-	stdin         string
+	name  string
+	stdin string
+	// tmp allows to create files before the test and remove them once
+	// finished. The key is the path relative to [os.TempDir]. If the
+	// content is empty, the file will not be created, and only cleaned.
+	tmp           map[string]string
 	expectedAddrs []string
 	expectedMails []mailer.Mail
 	expectedLog   string
@@ -167,6 +173,10 @@ Subject: Send
 
 Content of the mail!
 `,
+			tmp: map[string]string{
+				"newsletter-send-KAV4QKP2PFXLWHG5XM3E6X23PROVB5DGNDSABUPA6XQIODZDJ6UA====.subject.txt": "",
+				"newsletter-send-KAV4QKP2PFXLWHG5XM3E6X23PROVB5DGNDSABUPA6XQIODZDJ6UA====.body.txt":    "",
+			},
 			expectedMails: []mailer.Mail{{
 				FromAddr:        "user@club1.fr",
 				FromName:        "Display Name",
@@ -188,6 +198,20 @@ Content of the mail!
 }
 
 func subTestHandle(t *testing.T, tc *testCase) {
+	for file, content := range tc.tmp {
+		path := filepath.Join(os.TempDir(), file)
+		if content != "" {
+			if err := os.WriteFile(path, []byte(content), 644); err != nil {
+				t.Fatalf("setup tmp: %v", err)
+			}
+		}
+		t.Cleanup(func() {
+			if err := os.Remove(path); err != nil {
+				t.Errorf("cleanup tmp: %v", err)
+			}
+		})
+	}
+
 	route := path.Dir(tc.name)
 	c, syslog, mail, err := handle(t, route, tc.stdin)
 	if err != nil {
