@@ -20,8 +20,10 @@
 package control
 
 import (
+	"os"
+	"path"
+	"path/filepath"
 	"reflect"
-	"slices"
 	"strings"
 	"testing"
 
@@ -61,84 +63,194 @@ func setupTest(t *testing.T) (*Controller, *DummySyslog) {
 	return &Controller{log: logger, nl: nl}, syslog
 }
 
-func handle(t *testing.T, route, stdin string) (*Controller, *DummySyslog, *mailer.Mail, error) {
+func handle(t *testing.T, route, stdin string) (*Controller, *DummySyslog, []mailer.Mail, error) {
 	controller, syslog := setupTest(t)
 
-	var mail *mailer.Mail
+	var mails []mailer.Mail
 	controller.nl.Mailer = &mailertest.Mailer{Handler: func(m *mailer.Mail) error {
-		mail = m
+		mails = append(mails, *m)
 		return nil
 	}}
 
 	err := controller.Handle(route, strings.NewReader(stdin))
-	return controller, syslog, mail, err
+	return controller, syslog, mails, err
 }
 
-func TestSubscribe(t *testing.T) {
-	route := newsletter.RouteSubscribe
-	stdin := `From: test@club1.fr
+type testCase struct {
+	name  string
+	stdin string
+	// tmp allows to create files before the test and remove them once
+	// finished. The key is the path relative to [os.TempDir]. If the
+	// content is empty, the file will not be created, and only cleaned.
+	tmp           map[string]string
+	expectedAddrs []string
+	expectedMails []mailer.Mail
+	expectedLog   string
+}
+
+func TestHandle(t *testing.T) {
+	cases := []*testCase{
+		{
+			name: "subscribe/basic",
+			stdin: `From: test@club1.fr
 To: user+subscribe@club1.fr
 Message-Id: <fakeid@club1.fr>
 Subject: Subscribe
-
-`
-	_, syslog, mail, err := handle(t, route, stdin)
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-
-	// TODO: check syslog instead of just printing
-	t.Log(syslog.String())
-
-	expected := &mailer.Mail{
-		FromAddr:        "user@club1.fr",
-		FromName:        "Display Name",
-		To:              "test@club1.fr",
-		Id:              "<user-NRGABAKKE6AKVXM5S7IJQOUFFOXC2B3UF5QWX5VYFAKBRNWHZBHQ====@club1.fr>",
-		InReplyTo:       "<fakeid@club1.fr>",
-		ReplyTo:         "user+subscribe-confirm@club1.fr",
-		ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
-		Subject:         "[Title] Please confirm your subsciption",
-		Body:            "Reply to this email to confirm that you want to subscribe to the newsletter [Title] (the content does not matter).\n\n-- \nBye bye",
-	}
-	if !reflect.DeepEqual(mail, expected) {
-		t.Errorf("expected mail:\n%#v\ngot:\n%#v", expected, mail)
-	}
-}
-
-func TestSubscribeConfirm(t *testing.T) {
-	route := newsletter.RouteSubscribeConfirm
-	stdin := `From: test@club1.fr
+`,
+			expectedMails: []mailer.Mail{{
+				FromAddr:        "user@club1.fr",
+				FromName:        "Display Name",
+				To:              "test@club1.fr",
+				Id:              "<user-NRGABAKKE6AKVXM5S7IJQOUFFOXC2B3UF5QWX5VYFAKBRNWHZBHQ====@club1.fr>",
+				InReplyTo:       "<fakeid@club1.fr>",
+				ReplyTo:         "user+subscribe-confirm@club1.fr",
+				ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
+				Subject:         "[Title] Please confirm your subsciption",
+				Body:            "Reply to this email to confirm that you want to subscribe to the newsletter [Title] (the content does not matter).\n\n-- \nBye bye",
+			}},
+		},
+		{
+			name: "subscribe/already subscribed",
+			stdin: `From: recipient@club1.fr
+To: user+subscribe@club1.fr
+Message-Id: <fakeid@club1.fr>
+Subject: Subscribe
+`,
+			expectedLog: `address is already subscribed: recipient@club1.fr`,
+			expectedMails: []mailer.Mail{{
+				FromAddr:        "user@club1.fr",
+				FromName:        "Display Name",
+				To:              "recipient@club1.fr",
+				InReplyTo:       "<fakeid@club1.fr>",
+				ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
+				Subject:         "[Title] Already subscribed",
+				Body:            "Your email is already subscribed, if problem persist, contact <postmaster@club1.fr>.\n\n-- \nBye bye",
+			}},
+		},
+		{
+			name: "subscribe-confirm/basic",
+			stdin: `From: test@club1.fr
 To: user+subscribe-confirm@club1.fr
 Message-Id: <fakeid2@club1.fr>
 In-Reply-To: <user-NRGABAKKE6AKVXM5S7IJQOUFFOXC2B3UF5QWX5VYFAKBRNWHZBHQ====@club1.fr>
 Subject: Subscribe confirm
+`,
+			expectedAddrs: []string{"recipient@club1.fr", "test@club1.fr"},
+			expectedMails: []mailer.Mail{{
+				FromAddr:        "user@club1.fr",
+				FromName:        "Display Name",
+				To:              "test@club1.fr",
+				InReplyTo:       "<fakeid2@club1.fr>",
+				ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
+				Subject:         "[Title] Subscription is successfull !",
+				Body:            "Your email has been successfully subscribed to the newsletter [Title].\n\n-- \nBye bye",
+			}},
+		},
+		{
+			name: "unsubscribe/basic",
+			stdin: `From: recipient@club1.fr
+To: user+unsubscribe@club1.fr
+Message-Id: <fakeid@club1.fr>
+Subject: Unsubscribe
+`,
+			expectedAddrs: []string{},
+			expectedMails: []mailer.Mail{{
+				FromAddr:        "user@club1.fr",
+				FromName:        "Display Name",
+				To:              "recipient@club1.fr",
+				InReplyTo:       "<fakeid@club1.fr>",
+				ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
+				Subject:         "[Title] Unsubscription is successfull",
+				Body:            "Your email has been successfully unsubscribed from the newsletter [Title].\n\n-- \nBye bye",
+			}},
+		},
+		{
+			name: "send/basic",
+			stdin: `From: user@club1.fr
+To: user+send@club1.fr
+Message-Id: <fakeid@club1.fr>
+Subject: Send
 
-`
-	c, syslog, mail, err := handle(t, route, stdin)
+Content of the mail!
+`,
+			tmp: map[string]string{
+				"newsletter-send-KAV4QKP2PFXLWHG5XM3E6X23PROVB5DGNDSABUPA6XQIODZDJ6UA====.subject.txt": "",
+				"newsletter-send-KAV4QKP2PFXLWHG5XM3E6X23PROVB5DGNDSABUPA6XQIODZDJ6UA====.body.txt":    "",
+			},
+			expectedMails: []mailer.Mail{{
+				FromAddr:        "user@club1.fr",
+				FromName:        "Display Name",
+				To:              "user@club1.fr",
+				Id:              "user-KAV4QKP2PFXLWHG5XM3E6X23PROVB5DGNDSABUPA6XQIODZDJ6UA====@club1.fr",
+				InReplyTo:       "", // FIXME: shouldn't it be in reply to our message ID?
+				ReplyTo:         "user+send-confirm@club1.fr",
+				ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
+				Subject:         "[Title] Send (preview)",
+				Body:            "Content of the mail!\n\n-- \nBye bye\n\nTo unsubscribe, send a mail to <user+unsubscribe@club1.fr>(\n\nthis is a preview mail, if you want to confirm and send the newsletter to all the 1 subscribers, reply to this email)",
+			}},
+		},
+		{
+			name: "send-confirm/basic",
+			stdin: `From: user@club1.fr
+To: user+send-confirm@club1.fr
+Message-Id: <fakeid2@club1.fr>
+In-Reply-To: <user-KAV4QKP2PFXLWHG5XM3E6X23PROVB5DGNDSABUPA6XQIODZDJ6UA====@club1.fr>
+Subject: Send confirm
+`,
+			tmp: map[string]string{
+				"newsletter-send-KAV4QKP2PFXLWHG5XM3E6X23PROVB5DGNDSABUPA6XQIODZDJ6UA====.subject.txt": "Send",
+				"newsletter-send-KAV4QKP2PFXLWHG5XM3E6X23PROVB5DGNDSABUPA6XQIODZDJ6UA====.body.txt":    "Content of the mail!",
+			},
+			expectedMails: []mailer.Mail{{
+				FromAddr:        "user@club1.fr",
+				FromName:        "Display Name",
+				To:              "recipient@club1.fr",
+				ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
+				Subject:         "[Title] Send",
+				Body:            "Content of the mail!\n\n-- \nBye bye\n\nTo unsubscribe, send a mail to <user+unsubscribe@club1.fr>",
+			}},
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			subTestHandle(t, c)
+		})
+	}
+}
+
+func subTestHandle(t *testing.T, tc *testCase) {
+	for file, content := range tc.tmp {
+		path := filepath.Join(os.TempDir(), file)
+		if content != "" {
+			if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+				t.Fatalf("setup tmp: %v", err)
+			}
+		}
+		t.Cleanup(func() {
+			if err := os.Remove(path); err != nil {
+				t.Errorf("cleanup tmp: %v", err)
+			}
+		})
+	}
+
+	route := path.Dir(tc.name)
+	c, syslog, mail, err := handle(t, route, tc.stdin)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	// TODO: check syslog instead of just printing
-	t.Log(syslog.String())
-
-	expectedAddr := "test@club1.fr"
-	if !slices.Contains(c.nl.Config.Emails, expectedAddr) {
-		t.Errorf("expected %q to be subscribed, got %v", expectedAddr, c.nl.Config.Emails)
+	log := strings.TrimSpace(syslog.String())
+	if !strings.Contains(log, tc.expectedLog) {
+		t.Errorf("expected log to contain:\n%s\ngot:\n%s", tc.expectedLog, log)
 	}
 
-	expectedMail := &mailer.Mail{
-		FromAddr:        "user@club1.fr",
-		FromName:        "Display Name",
-		To:              "test@club1.fr",
-		InReplyTo:       "<fakeid2@club1.fr>",
-		ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
-		Subject:         "[Title] Subscription is successfull !",
-		Body:            "Your email has been successfully subscribed to the newsletter [Title].\n\n-- \nBye bye",
+	if tc.expectedAddrs != nil {
+		if !reflect.DeepEqual(c.nl.Config.Emails, tc.expectedAddrs) {
+			t.Errorf("expected subscribed addrs:\n%#v\ngot:\n%#v", tc.expectedAddrs, c.nl.Config.Emails)
+		}
 	}
 
-	if !reflect.DeepEqual(mail, expectedMail) {
-		t.Errorf("expected mail:\n%#v\ngot:\n%#v", expectedMail, mail)
+	if !reflect.DeepEqual(mail, tc.expectedMails) {
+		t.Errorf("expected mail:\n%#v\ngot:\n%#v", tc.expectedMails, mail)
 	}
 }
