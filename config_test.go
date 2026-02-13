@@ -20,6 +20,7 @@
 package newsletter_test
 
 import (
+	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
@@ -77,5 +78,47 @@ func subTestInitConfig(t *testing.T, name string, expected *newsletter.Config) {
 	}
 	if !reflect.DeepEqual(expected, config) {
 		t.Errorf("expected:\n%#v\ngot:\n%#v", expected, config)
+	}
+}
+
+func TestSaveSettings(t *testing.T) {
+	cases := []struct {
+		name     string
+		settings newsletter.Settings
+		expected string
+	}{
+		{
+			"empty",
+			newsletter.Settings{},
+			// FIXME(nicolas): maybe save config with indentation?
+			`{"Title":"","DisplayName":"","Language":""}`,
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			subTestSaveSettings(t, c.settings, c.expected)
+		})
+	}
+}
+
+func subTestSaveSettings(t *testing.T, settings newsletter.Settings, expected string) {
+	tmp := t.TempDir()
+	config := &newsletter.Config{
+		Dir:      tmp,
+		Settings: settings,
+	}
+
+	err := config.SaveSettings()
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	content, err := os.ReadFile(filepath.Join(tmp, "settings.json"))
+	if err != nil {
+		t.Fatalf("read saved config: %v", err)
+	}
+
+	if string(content) != expected {
+		t.Errorf("expected:\n%s\ngot:\n%s", expected, content)
 	}
 }
