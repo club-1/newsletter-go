@@ -45,6 +45,18 @@ func TestInitConfig(t *testing.T) {
 				},
 			},
 		},
+		{
+			"with_emails",
+			&newsletter.Config{
+				Emails: []string{"coucou@club1.fr", "test@example.com"},
+				Secret: "BASIC_SECRET",
+				Settings: newsletter.Settings{
+					Title:       "Title",
+					DisplayName: "Display Name",
+					Language:    messages.LangFrench,
+				},
+			},
+		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
