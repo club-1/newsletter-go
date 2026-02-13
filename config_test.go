@@ -81,6 +81,18 @@ func subTestInitConfig(t *testing.T, name string, expected *newsletter.Config) {
 	}
 }
 
+func TestInitConfigEmpty(t *testing.T) {
+	tmpDir := t.TempDir()
+	config, err := newsletter.InitConfig(tmpDir)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	expectedSecretLen := 44
+	if len(config.Secret) != expectedSecretLen {
+		t.Errorf("expected secret length to be %d, got: %q (len=%d)", expectedSecretLen, config.Secret, len(config.Secret))
+	}
+}
+
 func TestSaveSettings(t *testing.T) {
 	cases := []struct {
 		name     string
