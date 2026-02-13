@@ -95,13 +95,8 @@ func (c *Config) SaveSignature() error {
 
 func (c *Config) SaveSettings() error {
 	settingsFilePath := filepath.Join(c.Dir, SettingsFile)
-	settingsJson, err := json.Marshal(c.Settings)
-	if err != nil {
-		return fmt.Errorf("could not encode settings JSON: %w", err)
-	}
-	err = os.WriteFile(settingsFilePath, settingsJson, 0660)
-	if err != nil {
-		return fmt.Errorf("could not write settings: %w", err)
+	if err := saveSettings(settingsFilePath, c.Settings); err != nil {
+		return fmt.Errorf("could not save settings: %w", err)
 	}
 	return nil
 }
@@ -139,6 +134,18 @@ func randString() string {
 	dst := make([]byte, base64.StdEncoding.EncodedLen(len(key)))
 	base64.StdEncoding.Encode(dst, key)
 	return string(dst)
+}
+
+func saveSettings(path string, settings Settings) error {
+	settingsJson, err := json.Marshal(settings)
+	if err != nil {
+		return fmt.Errorf("encode settings JSON: %w", err)
+	}
+	err = os.WriteFile(path, settingsJson, 0660)
+	if err != nil {
+		return fmt.Errorf("write settings: %w", err)
+	}
+	return nil
 }
 
 // InitConfig returns a new [*Config] loaded from the given configDir.
@@ -196,13 +203,8 @@ func InitConfig(configDir string) (*Config, error) {
 	_, err = os.Stat(settingsFilePath)
 	if errors.Is(err, os.ErrNotExist) {
 		settings = Settings{}
-		settingsJson, err := json.Marshal(settings)
-		if err != nil {
-			return nil, fmt.Errorf("encode settings JSON: %w", err)
-		}
-		err = os.WriteFile(settingsFilePath, settingsJson, 0660)
-		if err != nil {
-			return nil, fmt.Errorf("write settings: %w", err)
+		if err := saveSettings(settingsFilePath, settings); err != nil {
+			return nil, fmt.Errorf("init settings: %w", err)
 		}
 	} else {
 		settingsJson, err := os.ReadFile(settingsFilePath)
