@@ -41,7 +41,6 @@ const CmdName = "newsletter"
 var version = "unknown"
 
 var (
-	nl          *newsletter.Newsletter
 	flagVerbose bool
 	flagYes     bool
 	flagPreview bool
@@ -139,7 +138,7 @@ func initForwardFiles() error {
 	return nil
 }
 
-func stop() error {
+func stop(nl *newsletter.Newsletter) error {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return fmt.Errorf("get user home directory: %w", err)
@@ -165,7 +164,7 @@ func stop() error {
 	return nil
 }
 
-func setup() error {
+func setup(nl *newsletter.Newsletter) error {
 	err := initForwardFiles()
 	if err != nil {
 		return err
@@ -220,7 +219,7 @@ func setup() error {
 	return nil
 }
 
-func send(args []string) error {
+func send(nl *newsletter.Newsletter, args []string) error {
 	subject, body, err := getSubjectBody(args)
 	if err != nil {
 		return err
@@ -341,8 +340,7 @@ func main() {
 		help()
 	}
 
-	var err error
-	nl, err = newsletter.New()
+	nl, err := newsletter.New()
 	if err != nil {
 		log.Fatalf("init newsletter: %v", err)
 	}
@@ -351,11 +349,11 @@ func main() {
 
 	switch args[0] {
 	case "stop":
-		cmdErr = stop()
+		cmdErr = stop(nl)
 	case "setup":
-		cmdErr = setup()
+		cmdErr = setup(nl)
 	case "send":
-		cmdErr = send(args[1:])
+		cmdErr = send(nl, args[1:])
 	default:
 		cmdlineFatalf("invalid sub command: %s", args[0])
 	}
