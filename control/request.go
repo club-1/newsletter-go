@@ -22,6 +22,7 @@ package control
 import (
 	"errors"
 	"io"
+	"log/slog"
 	"net/mail"
 
 	"github.com/mnako/letters"
@@ -31,13 +32,17 @@ import (
 //
 // It is a very basic wrapper around [letters.Email] that parses some
 // additional header fields that we always want to be valid.
+// It is used to pass the context of a single request to the different
+// routes.
+// Its logger Log can be used for contextualised logging.
 type Request struct {
 	letters.Email
+	Log       *slog.Logger
 	From      *mail.Address
 	MessageID string
 }
 
-func ParseRequest(r io.Reader) (*Request, error) {
+func ParseRequest(logger *slog.Logger, r io.Reader) (*Request, error) {
 	email, err := letters.ParseEmail(r)
 	if err != nil {
 		return nil, err
@@ -45,12 +50,14 @@ func ParseRequest(r io.Reader) (*Request, error) {
 	if len(email.Headers.From) == 0 {
 		return nil, errors.New(`"From" field missing from header or empty`)
 	}
+	from := email.Headers.From[0]
 	if email.Headers.MessageID == "" {
 		return nil, errors.New(`"Message-ID" field missing from header or empty`)
 	}
 	return &Request{
 		Email:     email,
-		From:      email.Headers.From[0],
+		Log:       logger.With("from", from.Address),
+		From:      from,
 		MessageID: string(email.Headers.MessageID),
 	}, nil
 }
