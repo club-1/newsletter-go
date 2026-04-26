@@ -260,7 +260,7 @@ func send(nl *newsletter.Newsletter, args []string) error {
 		}
 	}
 
-	fmt.Print("sending")
+	fmt.Print("sending ")
 	var errCount = 0
 	for _, address := range nl.Config.Emails {
 		mail.To = address
@@ -271,9 +271,9 @@ func send(nl *newsletter.Newsletter, args []string) error {
 		} else {
 			fmt.Print("·")
 		}
-		time.Sleep(1 * time.Second)
+		time.Sleep(200 * time.Millisecond)
 	}
-	fmt.Printf("done !\n")
+	fmt.Printf(" done !\n")
 
 	if errCount > 0 {
 		return fmt.Errorf("error occured while sending mail to %v addresses", errCount)
