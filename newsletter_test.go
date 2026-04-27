@@ -112,22 +112,18 @@ func TestSendPreviewMail(t *testing.T) {
 		FromAddr: "user@club1.fr",
 		Subject:  "Coucou les loulous",
 	}
-	original := mail
 	expected := &mailer.Mail{
 		FromAddr: "user@club1.fr",
 		Subject:  "Coucou les loulous (preview)",
 		To:       "user@club1.fr",
 	}
 
-	err := nl.SendPreviewMail(&mail)
+	err := nl.SendPreviewMail(mail)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 
 	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf("expected preview:\n%#v\ngot:\n%#v", expected, actual)
-	}
-	if !reflect.DeepEqual(mail, original) {
-		t.Errorf("expected original:\n%#v\ngot:\n%#v", original, mail)
 	}
 }

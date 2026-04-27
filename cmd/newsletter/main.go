@@ -231,7 +231,7 @@ func send(nl *newsletter.Newsletter, args []string) error {
 	addrCount := len(nl.Config.Emails)
 
 	if !flagYes {
-		err = nl.SendPreviewMail(mail)
+		err = nl.SendPreviewMail(*mail)
 		if err != nil {
 			return err
 		}

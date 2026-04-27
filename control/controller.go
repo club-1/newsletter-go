@@ -246,7 +246,7 @@ func (c *Controller) send(req *Request) error {
 	mail.Body += fmt.Sprintf("(\n\nthis is a preview mail, if you want to confirm and send the newsletter to all the %v subscribers, reply to this email)", len(c.nl.Config.Emails))
 	mail.ReplyTo = c.nl.SendConfirmAddr()
 
-	return c.nl.SendPreviewMail(mail)
+	return c.nl.SendPreviewMail(*mail)
 }
 
 func (c *Controller) sendConfirm(req *Request) error {
