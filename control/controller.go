@@ -73,6 +73,14 @@ func (c *Controller) response(req *Request, subject string, body string) *mailer
 	mail := c.nl.DefaultMail(subject, body)
 	mail.InReplyTo = fmt.Sprintf("<%s>", req.MessageID)
 	mail.To = req.From.Address
+
+	referencesBuilder := strings.Builder{}
+	for _, id := range req.Headers.References {
+		fmt.Fprintf(&referencesBuilder, "<%s> ", id)
+	}
+	fmt.Fprintf(&referencesBuilder, "<%s>", req.MessageID)
+	mail.References = referencesBuilder.String()
+
 	return mail
 }
 

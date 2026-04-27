@@ -103,6 +103,7 @@ Subject: Subscribe
 				To:              "test@club1.fr",
 				Id:              "<user-NRGABAKKE6AKVXM5S7IJQOUFFOXC2B3UF5QWX5VYFAKBRNWHZBHQ====@club1.fr>",
 				InReplyTo:       "<fakeid@club1.fr>",
+				References:      "<fakeid@club1.fr>",
 				ReplyTo:         "user+subscribe-confirm@club1.fr",
 				ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
 				Subject:         "[Title] Please confirm your subsciption",
@@ -122,6 +123,7 @@ Subject: Subscribe
 				FromName:        "Display Name",
 				To:              "recipient@club1.fr",
 				InReplyTo:       "<fakeid@club1.fr>",
+				References:      "<fakeid@club1.fr>",
 				ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
 				Subject:         "[Title] Already subscribed",
 				Body:            "Your email is already subscribed, if problem persist, contact <postmaster@club1.fr>.\n\n-- \nBye bye",
@@ -133,6 +135,7 @@ Subject: Subscribe
 To: user+subscribe-confirm@club1.fr
 Message-Id: <fakeid2@club1.fr>
 In-Reply-To: <user-NRGABAKKE6AKVXM5S7IJQOUFFOXC2B3UF5QWX5VYFAKBRNWHZBHQ====@club1.fr>
+References: <user-NRGABAKKE6AKVXM5S7IJQOUFFOXC2B3UF5QWX5VYFAKBRNWHZBHQ====@club1.fr>
 Subject: Subscribe confirm
 `,
 			expectedAddrs: []string{"recipient@club1.fr", "test@club1.fr"},
@@ -141,6 +144,7 @@ Subject: Subscribe confirm
 				FromName:        "Display Name",
 				To:              "test@club1.fr",
 				InReplyTo:       "<fakeid2@club1.fr>",
+				References:      "<user-NRGABAKKE6AKVXM5S7IJQOUFFOXC2B3UF5QWX5VYFAKBRNWHZBHQ====@club1.fr> <fakeid2@club1.fr>",
 				ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
 				Subject:         "[Title] Subscription is successfull !",
 				Body:            "Your email has been successfully subscribed to the newsletter [Title].\n\n-- \nBye bye",
@@ -159,6 +163,7 @@ Subject: Unsubscribe
 				FromName:        "Display Name",
 				To:              "recipient@club1.fr",
 				InReplyTo:       "<fakeid@club1.fr>",
+				References:      "<fakeid@club1.fr>",
 				ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
 				Subject:         "[Title] Unsubscription is successfull",
 				Body:            "Your email has been successfully unsubscribed from the newsletter [Title].\n\n-- \nBye bye",
@@ -183,6 +188,7 @@ Content of the mail!
 				To:              "user@club1.fr",
 				Id:              "user-KAV4QKP2PFXLWHG5XM3E6X23PROVB5DGNDSABUPA6XQIODZDJ6UA====@club1.fr",
 				InReplyTo:       "", // FIXME: shouldn't it be in reply to our message ID?
+				References:      "", // FIXME: shouldn't it be in our message's thread?
 				ReplyTo:         "user+send-confirm@club1.fr",
 				ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
 				Subject:         "[Title] Send (preview)",
@@ -195,6 +201,7 @@ Content of the mail!
 To: user+send-confirm@club1.fr
 Message-Id: <fakeid2@club1.fr>
 In-Reply-To: <user-KAV4QKP2PFXLWHG5XM3E6X23PROVB5DGNDSABUPA6XQIODZDJ6UA====@club1.fr>
+References: <user-KAV4QKP2PFXLWHG5XM3E6X23PROVB5DGNDSABUPA6XQIODZDJ6UA====@club1.fr>
 Subject: Send confirm
 `,
 			tmp: map[string]string{
