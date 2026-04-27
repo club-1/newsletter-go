@@ -124,14 +124,15 @@ func (nl *Newsletter) DefaultMail(subject string, body string) *mailer.Mail {
 
 // add a `(preview)` text after original subject
 func (nl *Newsletter) SendPreviewMail(mail *mailer.Mail) error {
-	mail.To = nl.LocalUserAddr()
-	mail.Subject += " (preview)"
+	previewMail := mail // copy the email to avoid editing the real one
+	previewMail.To = nl.LocalUserAddr()
+	previewMail.Subject += " (preview)"
 
-	err := nl.Mailer.Send(mail)
+	err := nl.Mailer.Send(previewMail)
 	if err != nil {
 		return fmt.Errorf("send preview mail: %w", err)
 	}
-	fmt.Printf("📨 preview email send to %s\n", nl.LocalUserAddr())
+	fmt.Printf("📨 preview email sent to %s\n", nl.LocalUserAddr())
 	return nil
 }
 
