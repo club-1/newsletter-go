@@ -84,4 +84,8 @@ var (
 		en: "Your email cannot be added to the subscripted list, contact list owner for more infos: <%s>.",
 		fr: "Votre email ne peut pas être inscrit à la liste, veuillez contacter le propriétaire de la liste pour plus d'infos : <%s>.",
 	}
+	Newsletter_footer = Message{
+		en: "\n\nTo unsubscribe, send a mail to <%s>",
+		fr: "\n\nPour vous désinscrire, envoyez un email à <%s>",
+	}
 )

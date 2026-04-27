@@ -226,7 +226,7 @@ func send(nl *newsletter.Newsletter, args []string) error {
 	}
 
 	mail := nl.DefaultMail(subject, body)
-	mail.Body += fmt.Sprintf("\n\nTo unsubscribe, send a mail to <%s>", nl.UnsubscribeAddr())
+	mail.Body += fmt.Sprintf(messages.Newsletter_footer.Print(), nl.UnsubscribeAddr())
 
 	addrCount := len(nl.Config.Emails)
 
@@ -344,6 +344,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("init newsletter: %v", err)
 	}
+
+	messages.SetLanguage(nl.Config.Settings.Language)
 
 	var cmdErr error
 

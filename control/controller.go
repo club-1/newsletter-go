@@ -292,7 +292,7 @@ func (c *Controller) sendConfirm(req *Request) error {
 	}
 
 	mail := c.nl.DefaultMail(subject, body)
-	mail.Body += fmt.Sprintf("\n\nTo unsubscribe, send a mail to <%s>", c.nl.UnsubscribeAddr())
+	mail.Body += fmt.Sprintf(messages.Newsletter_footer.Print(), c.nl.UnsubscribeAddr())
 	err = c.nl.SendNews(mail)
 	if err != nil {
 		return fmt.Errorf("sending newsletter: %w", err)
