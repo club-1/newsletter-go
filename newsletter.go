@@ -103,7 +103,7 @@ func (nl *Newsletter) SendConfirmAddr() string {
 	return nl.LocalUser + "+" + RouteSendConfirm + "@" + nl.Hostname
 }
 
-// pre-fill the base mail with default values
+// DefaultMail creates a new [mailer.Mail] struct with default values.
 func (nl *Newsletter) DefaultMail(subject string, body string) *mailer.Mail {
 	if nl.Config.Settings.Title != "" {
 		subject = "[" + nl.Config.Settings.Title + "] " + subject
@@ -122,8 +122,8 @@ func (nl *Newsletter) DefaultMail(subject string, body string) *mailer.Mail {
 	}
 }
 
-// SendPreviewMail sends the given mail, appending (preview) to the original
-// subject
+// SendPreviewMail sends a preview of the given mail to the owner of the
+// newsletter, appending (preview) to the original subject.
 func (nl *Newsletter) SendPreviewMail(mail mailer.Mail) error {
 	mail.To = nl.LocalUserAddr()
 	mail.Subject += " (preview)"
@@ -136,7 +136,8 @@ func (nl *Newsletter) SendPreviewMail(mail mailer.Mail) error {
 	return nil
 }
 
-// send the newsletter to all the subscribed addresses
+// SendNews sends the given mail to all the addresses subscribed to the
+// newsletter.
 func (nl *Newsletter) SendNews(mail *mailer.Mail) error {
 	var errCount = 0
 	for _, address := range nl.Config.Emails {

@@ -67,7 +67,8 @@ func NewController() (*Controller, error) {
 	}, nil
 }
 
-// base response mail directed toward recieved From address
+// response creates a new [mailer.Mail] directed towards the request's From
+// address.
 func (c *Controller) response(req *Request, subject string, body string) *mailer.Mail {
 	mail := c.nl.DefaultMail(subject, body)
 	mail.InReplyTo = fmt.Sprintf("<%s>", req.MessageID)
@@ -75,7 +76,7 @@ func (c *Controller) response(req *Request, subject string, body string) *mailer
 	return mail
 }
 
-// sendResponse sends a reply to the received mail and log the result.
+// sendResponse sends a reply to the received mail and logs the result.
 func (c *Controller) sendResponse(req *Request, subject string, body string) {
 	mail := c.response(req, subject, body)
 	err := c.nl.Mailer.Send(mail)
@@ -105,9 +106,9 @@ func (c *Controller) GenerateConfirmID(req *Request) string {
 	return c.GenerateId(hash)
 }
 
-// retrive hash from message-ID using the form: `USER-HASH@SERVER`
-func (c *Controller) GetHashFromId(messageId string) (string, error) {
-	after, prefixFound := strings.CutPrefix(messageId, c.nl.LocalUser+"-")
+// GetHashFromId retrieves the hash from the given messageID of the form: `USER-HASH@SERVER`
+func (c *Controller) GetHashFromId(messageID string) (string, error) {
+	after, prefixFound := strings.CutPrefix(messageID, c.nl.LocalUser+"-")
 	before, suffixFound := strings.CutSuffix(after, "@"+c.nl.Hostname)
 	if !prefixFound || !suffixFound {
 		return "", errors.New("message ID doesn't match generated ID form")

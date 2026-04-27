@@ -60,8 +60,9 @@ func getCmdPrefix() (string, error) {
 	return filepath.Dir(filepath.Dir(realpath)), nil
 }
 
-// return subject and body contents.
-// if second argument is ommited, body content is read through STDIN
+// getSubjectBody returns the subject and body contents.
+// If the second argument is ommited, the body content is read from the
+// standard input.
 func getSubjectBody(args []string) (string, string, error) {
 	var bodyB []byte
 	var err error
