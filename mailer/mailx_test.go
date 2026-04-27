@@ -65,6 +65,26 @@ func TestMailxFlags(t *testing.T) {
 				`-- test@gmail.com`,
 			},
 		},
+		{
+			"reply",
+			&Mail{
+				FromAddr:   "nouvelles@club1.fr",
+				FromName:   "Nouvelles de CLUB1",
+				To:         "test@gmail.com",
+				Subject:    "Le sujet",
+				InReplyTo:  "<test-id2@club1.fr>",
+				References: "<test-id1@club1.fr> <test-id2@club1.fr>",
+			},
+			[]string{
+				`-s Le\\ sujet`,
+				`-r Nouvelles\\ de\\ CLUB1\\ \\<nouvelles@club1.fr\\>`,
+				`-a Content-Transfer-Encoding:\\ quoted-printable`,
+				`-a Content-Type:\\ text/plain\\;\\ charset=UTF-8`,
+				`-a In-Reply-To:\\ \\<test-id2@club1.fr\\>`,
+				`-a References:\\ \\<test-id1@club1.fr\\>\\ \\<test-id2@club1.fr\\>`,
+				`-- test@gmail.com`,
+			},
+		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

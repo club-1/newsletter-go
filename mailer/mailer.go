@@ -25,6 +25,7 @@ type Mail struct {
 	To              string
 	Id              string
 	InReplyTo       string
+	References      string
 	ReplyTo         string
 	ListUnsubscribe string
 	Subject         string

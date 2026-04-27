@@ -64,6 +64,9 @@ func (m *mailxMailer) Send(mail *Mail) error {
 	if mail.InReplyTo != "" {
 		args = append(args, "-a", "In-Reply-To: "+mail.InReplyTo)
 	}
+	if mail.References != "" {
+		args = append(args, "-a", "References: "+mail.References)
+	}
 	if mail.ReplyTo != "" {
 		args = append(args, "-a", "Reply-To: "+mail.ReplyTo)
 	}
