@@ -1,6 +1,6 @@
 -include .env
 
-VERSION     ?= $(shell git describe --tags --always)
+VERSION     ?= $(shell git describe --tags --always --dirty)
 BINS        := bin/newsletter sbin/newsletterctl
 REMOTE      ?= club1.fr
 REMOTE_PATH ?= /var/tmp/nlgo
