@@ -34,11 +34,11 @@ var (
 	}
 	ConfirmSubscription_body = Message{
 		en: "Reply to this email to confirm that you want to subscribe to the newsletter [%s] (the content does not matter).",
-		fr: "Répondez à cet email pour confirmez que vous souhaitez vous inscrire à la newsletter [%s] (le contenu n'a pas d'importance).",
+		fr: "Répondez à cet email pour confirmer que vous souhaitez vous inscrire à la newsletter [%s] (le contenu n'a pas d'importance).",
 	}
 	ConfirmSubscriptionAlt_body = Message{
 		en: "Reply to this email to confirm that you want to subscribe to %s's newsletter (the content does not matter).",
-		fr: "Répondez à cet email pour confirmez que vous souhaitez vous inscrire à la newsletter de %s (le contenu n'a pas d'importance).",
+		fr: "Répondez à cet email pour confirmer que vous souhaitez vous inscrire à la newsletter de %s (le contenu n'a pas d'importance).",
 	}
 	SuccessfullSubscription_subject = Message{
 		en: "Subscription is successfull !",
@@ -69,11 +69,11 @@ var (
 		fr: "Échec de la désinscription",
 	}
 	UnsubscriptionFailed_body = Message{
-		en: "Failed to unsubscribe your email from newsletter [%s]. Contact list owner for more infos: <%s>.",
+		en: "Failed to unsubscribe your email from newsletter [%s]. Contact list owner for more info: <%s>.",
 		fr: "La désinscription de votre email à la newsletter [%s] a échoué. Contactez le propriétaire de la liste pour plus d'infos : <%s>",
 	}
 	UnsubscriptionFailedAlt_body = Message{
-		en: "Failed to unsubscribe your email from %s's newsletter. Contact list owner for more infos: <%s>.",
+		en: "Failed to unsubscribe your email from %s's newsletter. Contact list owner for more info: <%s>.",
 		fr: "La désinscription de votre email à la newsletter de %s a échoué. Contactez le propriétaire de la liste pour plus d'infos : <%s>",
 	}
 	VerificationFailed_subject = Message{
@@ -81,7 +81,7 @@ var (
 		fr: "Échec de la vérification",
 	}
 	VerificationFailed_body = Message{
-		en: "Your email cannot be added to the subscripted list, contact list owner for more infos: <%s>.",
+		en: "Your email cannot be added to the subscripted list, contact list owner for more info: <%s>.",
 		fr: "Votre email ne peut pas être inscrit à la liste, veuillez contacter le propriétaire de la liste pour plus d'infos : <%s>.",
 	}
 	Newsletter_footer = Message{
