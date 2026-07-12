@@ -192,7 +192,7 @@ Content of the mail!
 				ReplyTo:         "user+send-confirm@club1.fr",
 				ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
 				Subject:         "[Title] Send (preview)",
-				Body:            "Content of the mail!\n\n-- \nBye bye\n\nTo unsubscribe, send a mail to <user+unsubscribe@club1.fr>(\n\nthis is a preview mail, if you want to confirm and send the newsletter to all the 1 subscribers, reply to this email)",
+				Body:            "Content of the mail!\n\n-- \nBye bye\n\nTo unsubscribe, send a mail to <user+unsubscribe@club1.fr>\n\n(this is a preview mail, if you want to confirm and send the newsletter to all the 1 subscribers, reply to this email)",
 			}},
 		},
 		{
