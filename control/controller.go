@@ -251,7 +251,7 @@ func (c *Controller) send(req *Request) error {
 
 	mail := c.nl.DefaultMail(subject, body)
 	mail.Id = c.GenerateId(hash)
-	mail.Body += fmt.Sprintf("\n\nTo unsubscribe, send a mail to <%s>", c.nl.UnsubscribeAddr())
+	mail.Body += fmt.Sprintf(messages.Newsletter_footer.Print(), c.nl.UnsubscribeAddr())
 	mail.Body += fmt.Sprintf("\n\n(this is a preview mail, if you want to confirm and send the newsletter to all the %v subscribers, reply to this email)", len(c.nl.Config.Emails))
 	mail.ReplyTo = c.nl.SendConfirmAddr()
 
