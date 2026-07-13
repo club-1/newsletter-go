@@ -104,6 +104,7 @@ Subject: Subscribe
 				InReplyTo:       "<fakeid@club1.fr>",
 				References:      "<fakeid@club1.fr>",
 				ReplyTo:         "user+subscribe-confirm@club1.fr",
+				ListId:          `"Display Name" <user.club1.fr>`,
 				ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
 				Subject:         "[Title] Please confirm your subsciption",
 				Body:            "Reply to this email to confirm that you want to subscribe to the newsletter [Title] (the content does not matter).\n\n-- \nBye bye",
@@ -122,6 +123,7 @@ Subject: Subscribe
 				To:              "recipient@club1.fr",
 				InReplyTo:       "<fakeid@club1.fr>",
 				References:      "<fakeid@club1.fr>",
+				ListId:          `"Display Name" <user.club1.fr>`,
 				ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
 				Subject:         "[Title] Already subscribed",
 				Body:            "Your email is already subscribed, if problem persist, contact <postmaster@club1.fr>.\n\n-- \nBye bye",
@@ -142,6 +144,7 @@ Subject: Subscribe confirm
 				To:              "test@club1.fr",
 				InReplyTo:       "<fakeid2@club1.fr>",
 				References:      "<user-NRGABAKKE6AKVXM5S7IJQOUFFOXC2B3UF5QWX5VYFAKBRNWHZBHQ====@club1.fr> <fakeid2@club1.fr>",
+				ListId:          `"Display Name" <user.club1.fr>`,
 				ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
 				Subject:         "[Title] Subscription is successfull !",
 				Body:            "Your email has been successfully subscribed to the newsletter [Title].\n\n-- \nBye bye",
@@ -160,6 +163,7 @@ Subject: Unsubscribe
 				To:              "recipient@club1.fr",
 				InReplyTo:       "<fakeid@club1.fr>",
 				References:      "<fakeid@club1.fr>",
+				ListId:          `"Display Name" <user.club1.fr>`,
 				ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
 				Subject:         "[Title] Unsubscription is successfull",
 				Body:            "Your email has been successfully unsubscribed from the newsletter [Title].\n\n-- \nBye bye",
@@ -185,6 +189,7 @@ Content of the mail!
 				InReplyTo:       "", // FIXME: shouldn't it be in reply to our message ID?
 				References:      "", // FIXME: shouldn't it be in our message's thread?
 				ReplyTo:         "user+send-confirm@club1.fr",
+				ListId:          `"Display Name" <user.club1.fr>`,
 				ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
 				Subject:         "[Title] Send (preview)",
 				Body:            "Content of the mail!\n\n-- \nBye bye\n\nTo unsubscribe, send a mail to <user+unsubscribe@club1.fr>\n\n(this is a preview mail, if you want to confirm and send the newsletter to all the 1 subscribers, reply to this email)",
@@ -206,6 +211,7 @@ Subject: Send confirm
 			expectedMails: []mailer.Mail{{
 				From:            "Display Name <user@club1.fr>",
 				To:              "recipient@club1.fr",
+				ListId:          `"Display Name" <user.club1.fr>`,
 				ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
 				Subject:         "[Title] Send",
 				Body:            "Content of the mail!\n\n-- \nBye bye\n\nTo unsubscribe, send a mail to <user+unsubscribe@club1.fr>",

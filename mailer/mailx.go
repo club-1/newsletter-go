@@ -67,6 +67,7 @@ func (m *mailxMailer) Send(mail *Mail) error {
 		{"In-Reply-To", mail.InReplyTo},
 		{"References", mail.References},
 		{"Reply-To", mail.ReplyTo},
+		{"List-Id", mail.ListId},
 		{"List-Unsubscribe", mail.ListUnsubscribe},
 	}
 	for _, header := range headers {
