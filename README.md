@@ -5,11 +5,15 @@ Newsletter-Go
 
 A very basic newsletter program for POSIX servers.
 
-It allow local server users to send a newsletter with their own email address to a list of subscribers.
+It allows local server users to send a newsletter with their own email address to a list of subscribers.
+It supports automatic (un)subscription via email and implements [RFC2369] and [RFC2919].
 
-It was designed for [CLUB1 community server](https://club1.fr/english), but may be usable by other UNIX-like servers (like *tilde* servers).
+It was designed for [CLUB1 community server](https://club1.fr/english),
+but may be usable by other UNIX-like servers (like *tilde* servers).
 
-The design strategy of this piece of code is to take advantage of Sendmail-style `.forward` files combined with recipient delimiter (`+` addresses). On CLUB1's server, we use it with Postfix ([man](https://www.postfix.org/local.8.html)).
+The design strategy of this piece of code is to take advantage of
+Sendmail-style `.forward` files combined with recipient delimiter (`+` addresses).
+On CLUB1's server, we use it with Postfix ([man](https://www.postfix.org/local.8.html)).
 
 This is a rewrite of the previous Bash version <https://github.com/club-1/newsletter> in Go.
 
@@ -113,6 +117,8 @@ Deployment will create:
     sbin/newsletterctl
 
 
+[RFC2369]: https://datatracker.ietf.org/doc/html/rfc2369
+[RFC2919]: https://datatracker.ietf.org/doc/html/rfc2919
 [build-svg]: https://github.com/club-1/newsletter-go/actions/workflows/build.yml/badge.svg
 [build-url]: https://github.com/club-1/newsletter-go/actions/workflows/build.yml
 [cover-svg]: https://github.com/club-1/newsletter-go/wiki/coverage.svg
