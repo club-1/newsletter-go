@@ -103,6 +103,10 @@ func (nl *Newsletter) UnsubscribeAddr() string {
 	return nl.LocalUser + "+" + RouteUnSubscribe + "@" + nl.Hostname
 }
 
+func (nl *Newsletter) ListUnsubscribeHdr() string {
+	return fmt.Sprintf("<mailto:%s>", nl.UnsubscribeAddr())
+}
+
 func (nl *Newsletter) SubscribeConfirmAddr() string {
 	return nl.LocalUser + "+" + RouteSubscribeConfirm + "@" + nl.Hostname
 }
@@ -123,7 +127,7 @@ func (nl *Newsletter) DefaultMail(subject string, body string) *mailer.Mail {
 
 	return &mailer.Mail{
 		From:            nl.FromHdr(),
-		ListUnsubscribe: fmt.Sprintf("<mailto:%s>", nl.UnsubscribeAddr()),
+		ListUnsubscribe: nl.ListUnsubscribeHdr(),
 		Subject:         subject,
 		Body:            body,
 	}
