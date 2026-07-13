@@ -58,20 +58,21 @@ func (m *mailxMailer) Send(mail *Mail) error {
 		"-a", "Content-Transfer-Encoding: quoted-printable",
 		"-a", "Content-Type: text/plain; charset=UTF-8",
 	}
-	if mail.Id != "" {
-		args = append(args, "-a", "Message-Id: "+mail.Id)
+	type Header struct {
+		name  string
+		value string
 	}
-	if mail.InReplyTo != "" {
-		args = append(args, "-a", "In-Reply-To: "+mail.InReplyTo)
+	headers := []Header{
+		{"Message-Id", mail.Id},
+		{"In-Reply-To", mail.InReplyTo},
+		{"References", mail.References},
+		{"Reply-To", mail.ReplyTo},
+		{"List-Unsubscribe", mail.ListUnsubscribe},
 	}
-	if mail.References != "" {
-		args = append(args, "-a", "References: "+mail.References)
-	}
-	if mail.ReplyTo != "" {
-		args = append(args, "-a", "Reply-To: "+mail.ReplyTo)
-	}
-	if mail.ListUnsubscribe != "" {
-		args = append(args, "-a", "List-Unsubscribe: "+mail.ListUnsubscribe)
+	for _, header := range headers {
+		if header.value != "" {
+			args = append(args, "-a", header.name+": "+header.value)
+		}
 	}
 	args = append(args, "--", mail.To)
 
