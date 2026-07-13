@@ -21,6 +21,7 @@ package newsletter
 
 import (
 	"fmt"
+	"iter"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -154,18 +155,14 @@ func (nl *Newsletter) SendPreviewMail(mail mailer.Mail) error {
 
 // SendNews sends the given mail to all the addresses subscribed to the
 // newsletter.
-func (nl *Newsletter) SendNews(mail *mailer.Mail) error {
-	var errCount = 0
-	for _, address := range nl.Config.Emails {
-		mail.To = address
-		err := nl.Mailer.Send(mail)
-		if err != nil {
-			errCount++
+func (nl *Newsletter) SendNews(mail *mailer.Mail) iter.Seq[error] {
+	return func(yield func(error) bool) {
+		for _, address := range nl.Config.Emails {
+			time.Sleep(200 * time.Millisecond)
+			mail.To = address
+			if !yield(nl.Mailer.Send(mail)) {
+				return
+			}
 		}
-		time.Sleep(200 * time.Millisecond)
 	}
-	if errCount > 0 {
-		return fmt.Errorf("error occured while sending mail to %v addresses", errCount)
-	}
-	return nil
 }

@@ -302,7 +302,8 @@ func (c *Controller) sendConfirm(req *Request) error {
 
 	mail := c.nl.DefaultMail(subject, body)
 	mail.Body += fmt.Sprintf(messages.Newsletter_footer.Print(), c.nl.UnsubscribeAddr())
-	err = c.nl.SendNews(mail)
+	errs := slices.Collect(c.nl.SendNews(mail))
+	err = errors.Join(errs...)
 	if err != nil {
 		return fmt.Errorf("sending newsletter: %w", err)
 	}

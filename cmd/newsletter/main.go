@@ -27,7 +27,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/charmbracelet/huh"
 	"github.com/club-1/newsletter-go/v3"
@@ -263,16 +262,13 @@ func send(nl *newsletter.Newsletter, args []string) error {
 
 	fmt.Print("sending ")
 	var errCount = 0
-	for _, address := range nl.Config.Emails {
-		mail.To = address
-		err := nl.Mailer.Send(mail)
+	for err := range nl.SendNews(mail) {
 		if err != nil {
 			errCount++
 			fmt.Print("x")
 		} else {
 			fmt.Print("·")
 		}
-		time.Sleep(200 * time.Millisecond)
 	}
 	fmt.Printf(" done !\n")
 
