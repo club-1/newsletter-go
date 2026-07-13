@@ -20,6 +20,7 @@
 package control
 
 import (
+	"log/slog"
 	"os"
 	"path"
 	"path/filepath"
@@ -57,10 +58,10 @@ func fakeNewsletter(t *testing.T) *newsletter.Newsletter {
 func setupTest(t *testing.T) (*Controller, *DummySyslog) {
 	t.Helper()
 	syslog := &DummySyslog{}
-	logger := &Logger{Writer: syslog}
+	logger := slog.New(NewSyslogHandler(syslog))
 	nl := fakeNewsletter(t)
 	messages.SetLanguage(nl.Config.Settings.Language)
-	return &Controller{log: logger, nl: nl}, syslog
+	return &Controller{logger: logger, nl: nl}, syslog
 }
 
 func handle(t *testing.T, route, stdin string) (*Controller, *DummySyslog, []mailer.Mail, error) {
@@ -85,7 +86,7 @@ type testCase struct {
 	tmp           map[string]string
 	expectedAddrs []string
 	expectedMails []mailer.Mail
-	expectedLog   string
+	expectedLog   []string
 }
 
 func TestHandle(t *testing.T) {
@@ -117,7 +118,7 @@ To: user+subscribe@club1.fr
 Message-Id: <fakeid@club1.fr>
 Subject: Subscribe
 `,
-			expectedLog: `address is already subscribed: recipient@club1.fr`,
+			expectedLog: []string{"from=recipient@club1.fr", "address is already subscribed"},
 			expectedMails: []mailer.Mail{{
 				From:            "Display Name <user@club1.fr>",
 				To:              "recipient@club1.fr",
@@ -247,8 +248,10 @@ func subTestHandle(t *testing.T, tc *testCase) {
 	}
 
 	log := strings.TrimSpace(syslog.String())
-	if !strings.Contains(log, tc.expectedLog) {
-		t.Errorf("expected log to contain:\n%s\ngot:\n%s", tc.expectedLog, log)
+	for _, expectedLogs := range tc.expectedLog {
+		if !strings.Contains(log, expectedLogs) {
+			t.Errorf("expected log to contain:\n%s\ngot:\n%s", expectedLogs, log)
+		}
 	}
 
 	if tc.expectedAddrs != nil {

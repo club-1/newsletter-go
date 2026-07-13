@@ -20,6 +20,7 @@
 package control
 
 import (
+	"log/slog"
 	"strings"
 	"testing"
 )
@@ -47,32 +48,36 @@ func (s *DummySyslog) Err(message string) error {
 	return s.write("e: ", message)
 }
 
-func (s *DummySyslog) Crit(message string) error {
-	return s.write("c: ", message)
-}
-
 func (s *DummySyslog) String() string {
 	return s.buf.String()
 }
 
-func TestLogger(t *testing.T) {
+func TestSyslogHandler(t *testing.T) {
 	syslog := &DummySyslog{}
-	logger := &Logger{Writer: syslog}
+	logger := slog.New(NewSyslogHandler(syslog))
 
-	logger.Infof("hello %s", "world")
-	logger.Warningf("warning")
-	logger.Errorf("error")
-	logger.Criticalf("critical")
-	logger.AddContext("context")
-	logger.Infof("hello again")
+	logger.Info("hello", "what", "world")
+	logger.Warn("warning")
+	logger.Error("error")
+	logger2 := logger.With("key", "value")
+	logger2.Info("hello again")
+	logger.Info("no attrs")
+	logger3 := logger.WithGroup("test")
+	logger3.Info("msg", "key", "value")
+	logger.Info("msg", "key", "value")
+	logger4 := logger3.With("coucou", "loulou")
+	logger4.Warn("hello")
 
-	expected := `i: hello world
+	expected := `i: what=world hello
 w: warning
 e: error
-c: critical
-i: context: hello again
+i: key=value hello again
+i: no attrs
+i: test.key=value msg
+i: key=value msg
+w: test.coucou=loulou hello
 `
 	if syslog.String() != expected {
-		t.Errorf("expected:\n%qgot:\n%q", expected, syslog.String())
+		t.Errorf("expected:\n%sgot:\n%s", expected, syslog.String())
 	}
 }

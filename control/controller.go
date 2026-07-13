@@ -25,6 +25,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"log/syslog"
 	"os"
 	"path/filepath"
@@ -41,8 +42,8 @@ const (
 )
 
 type Controller struct {
-	log *Logger
-	nl  *newsletter.Newsletter
+	logger *slog.Logger
+	nl     *newsletter.Newsletter
 }
 
 func NewController() (*Controller, error) {
@@ -50,20 +51,20 @@ func NewController() (*Controller, error) {
 	if err != nil {
 		return nil, fmt.Errorf("init syslog: %w", err)
 	}
-	logger := &Logger{Writer: sysLog}
+	logger := slog.New(NewSyslogHandler(sysLog))
 
 	nl, err := newsletter.New()
 	if err != nil {
-		logger.Criticalf("init newsletter: %v", err)
+		logger.Error(fmt.Sprintf("init newsletter: %v", err))
 		return nil, err
 	}
 	messages.SetLanguage(nl.Config.Settings.Language)
 
-	logger.AddContext(nl.LocalUser)
+	logger = logger.With("user", nl.LocalUser)
 
 	return &Controller{
-		log: logger,
-		nl:  nl,
+		logger: logger,
+		nl:     nl,
 	}, nil
 }
 
@@ -89,9 +90,9 @@ func (c *Controller) sendResponse(req *Request, subject string, body string) {
 	mail := c.response(req, subject, body)
 	err := c.nl.Mailer.Send(mail)
 	if err != nil {
-		c.log.Errorf("error while sending response mail: %v", err)
+		req.Log.Error(fmt.Sprintf("error while sending response mail: %v", err))
 	} else {
-		c.log.Infof("response mail sent to %q", req.From.Address)
+		req.Log.Info("response mail sent")
 	}
 }
 
@@ -126,7 +127,7 @@ func (c *Controller) GetHashFromId(messageID string) (string, error) {
 
 func (c *Controller) subscribe(req *Request) error {
 	if slices.Contains(c.nl.Config.Emails, req.From.Address) {
-		c.log.Warningf("address is already subscribed: %s", req.From.Address)
+		req.Log.Warn("address is already subscribed")
 		c.sendResponse(
 			req,
 			messages.AlreadySubscribed_subject.Print(),
@@ -151,13 +152,13 @@ func (c *Controller) subscribe(req *Request) error {
 		return fmt.Errorf("send response mail: %v", err)
 	}
 
-	c.log.Infof("subscription confirmation mail sent to %q", req.From.Address)
+	req.Log.Info("subscription confirmation mail sent")
 	return nil
 }
 
 func (c *Controller) subscribeConfirm(req *Request) error {
 	if slices.Contains(c.nl.Config.Emails, req.From.Address) {
-		c.log.Warningf("address is already subscribed: %s", req.From.Address)
+		req.Log.Warn("address is already subscribed")
 		c.sendResponse(
 			req,
 			messages.AlreadySubscribed_subject.Print(),
@@ -184,7 +185,7 @@ func (c *Controller) subscribeConfirm(req *Request) error {
 	if err != nil {
 		return fmt.Errorf("error while subscribing address: %v", err)
 	}
-	c.log.Infof("address %q has been added to subscribers", req.From.Address)
+	req.Log.Info("address has been added to subscribers")
 
 	var responseBody string
 	if c.nl.Config.Settings.Title == "" {
@@ -201,9 +202,9 @@ func (c *Controller) unsubscribe(req *Request) error {
 	err := c.nl.Config.Unsubscribe(req.From.Address)
 	switch {
 	case err == nil:
-		c.log.Infof("address %q removed from subscribers", req.From.Address)
+		req.Log.Info("address removed from subscribers")
 	case errors.Is(err, newsletter.ErrNotSubscribed):
-		c.log.Warningf("address is not subscribed: %s", req.From.Address)
+		req.Log.Warn("address is not subscribed")
 	default:
 		var responseBody string
 		if c.nl.Config.Settings.Title == "" {
@@ -306,20 +307,18 @@ func (c *Controller) sendConfirm(req *Request) error {
 	if err != nil {
 		return fmt.Errorf("sending newsletter: %w", err)
 	}
-	c.log.Infof("newsletter successfully sent to all the %v subscribers", len(c.nl.Config.Emails))
+	req.Log.Info("newsletter successfully sent to all subscribers", "sent", len(c.nl.Config.Emails))
 	return nil
 }
 
 func (c *Controller) Handle(route string, r io.Reader) error {
-	c.log.AddContext(fmt.Sprintf("route %q", route))
+	logger := c.logger.With("route", route)
 
-	request, err := ParseRequest(r)
+	request, err := ParseRequest(logger, r)
 	if err != nil {
-		c.log.Errorf("parse email: %v", err)
+		logger.Error(fmt.Sprintf("parse email: %v", err))
 		return err // TODO: maybe here return a better error
 	}
-
-	c.log.AddContext(fmt.Sprintf("from %q", request.From.Address))
 
 	var cmdErr error
 
@@ -335,11 +334,11 @@ func (c *Controller) Handle(route string, r io.Reader) error {
 	case newsletter.RouteSendConfirm:
 		cmdErr = c.sendConfirm(request)
 	default:
-		c.log.Errorf("invalid sub command: %q", route)
+		request.Log.Error("invalid route")
 	}
 
 	if cmdErr != nil {
-		c.log.Errorf("error: %v", cmdErr)
+		request.Log.Error(fmt.Sprintf("error: %v", cmdErr))
 	}
 
 	return cmdErr
