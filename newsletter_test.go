@@ -127,3 +127,38 @@ func TestSendPreviewMail(t *testing.T) {
 		t.Errorf("expected preview:\n%#v\ngot:\n%#v", expected, actual)
 	}
 }
+
+func TestSendNews(t *testing.T) {
+	var actual *mailer.Mail
+	nl := fakeNewsletter()
+	nl.Mailer = &mailertest.Mailer{Handler: func(mail *mailer.Mail) error {
+		actual = mail
+		return nil
+	}}
+
+	mail := &mailer.Mail{
+		From:    "<user@club1.fr>",
+		Subject: "Coucou les loulous",
+	}
+	expected := &mailer.Mail{
+		From:    "<user@club1.fr>",
+		Subject: "Coucou les loulous",
+		To:      "recipient@club1.fr",
+	}
+
+	count := 0
+	for err := range nl.SendNews(mail) {
+		count++
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		if !reflect.DeepEqual(actual, expected) {
+			t.Errorf("expected preview:\n%#v\ngot:\n%#v", expected, actual)
+		}
+	}
+
+	if count != 1 {
+		t.Errorf("expected 1 sent email, got: %d", count)
+	}
+}
