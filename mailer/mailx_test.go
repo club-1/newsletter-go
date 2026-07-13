@@ -52,10 +52,9 @@ func TestMailxFlags(t *testing.T) {
 		{
 			"basic",
 			&Mail{
-				FromAddr: "nouvelles@club1.fr",
-				FromName: "Nouvelles de CLUB1",
-				To:       "test@gmail.com",
-				Subject:  "Le sujet",
+				From:    "Nouvelles de CLUB1 <nouvelles@club1.fr>",
+				To:      "test@gmail.com",
+				Subject: "Le sujet",
 			},
 			[]string{
 				`-s Le\\ sujet`,
@@ -68,8 +67,7 @@ func TestMailxFlags(t *testing.T) {
 		{
 			"reply",
 			&Mail{
-				FromAddr:   "nouvelles@club1.fr",
-				FromName:   "Nouvelles de CLUB1",
+				From:       "Nouvelles de CLUB1 <nouvelles@club1.fr>",
 				To:         "test@gmail.com",
 				Subject:    "Le sujet",
 				InReplyTo:  "<test-id2@club1.fr>",
@@ -122,11 +120,10 @@ func TestMailxBody(t *testing.T) {
 	mailx := &mailxMailer{}
 
 	mail := &Mail{
-		FromAddr: "nouvelles@club1.fr",
-		FromName: "Nouvelles de CLUB1",
-		To:       "test@gmail.com",
-		Subject:  "Le sujet",
-		Body:     "Coucou, ça dit quoi ?",
+		From:    "Nouvelles de CLUB1 <nouvelles@club1.fr>",
+		To:      "test@gmail.com",
+		Subject: "Le sujet",
+		Body:    "Coucou, ça dit quoi ?",
 	}
 
 	expected := []byte("Coucou, =C3=A7a dit quoi ?")

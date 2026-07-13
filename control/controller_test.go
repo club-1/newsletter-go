@@ -98,8 +98,7 @@ Message-Id: <fakeid@club1.fr>
 Subject: Subscribe
 `,
 			expectedMails: []mailer.Mail{{
-				FromAddr:        "user@club1.fr",
-				FromName:        "Display Name",
+				From:            "Display Name <user@club1.fr>",
 				To:              "test@club1.fr",
 				Id:              "<user-NRGABAKKE6AKVXM5S7IJQOUFFOXC2B3UF5QWX5VYFAKBRNWHZBHQ====@club1.fr>",
 				InReplyTo:       "<fakeid@club1.fr>",
@@ -119,8 +118,7 @@ Subject: Subscribe
 `,
 			expectedLog: `address is already subscribed: recipient@club1.fr`,
 			expectedMails: []mailer.Mail{{
-				FromAddr:        "user@club1.fr",
-				FromName:        "Display Name",
+				From:            "Display Name <user@club1.fr>",
 				To:              "recipient@club1.fr",
 				InReplyTo:       "<fakeid@club1.fr>",
 				References:      "<fakeid@club1.fr>",
@@ -140,8 +138,7 @@ Subject: Subscribe confirm
 `,
 			expectedAddrs: []string{"recipient@club1.fr", "test@club1.fr"},
 			expectedMails: []mailer.Mail{{
-				FromAddr:        "user@club1.fr",
-				FromName:        "Display Name",
+				From:            "Display Name <user@club1.fr>",
 				To:              "test@club1.fr",
 				InReplyTo:       "<fakeid2@club1.fr>",
 				References:      "<user-NRGABAKKE6AKVXM5S7IJQOUFFOXC2B3UF5QWX5VYFAKBRNWHZBHQ====@club1.fr> <fakeid2@club1.fr>",
@@ -159,8 +156,7 @@ Subject: Unsubscribe
 `,
 			expectedAddrs: []string{},
 			expectedMails: []mailer.Mail{{
-				FromAddr:        "user@club1.fr",
-				FromName:        "Display Name",
+				From:            "Display Name <user@club1.fr>",
 				To:              "recipient@club1.fr",
 				InReplyTo:       "<fakeid@club1.fr>",
 				References:      "<fakeid@club1.fr>",
@@ -183,8 +179,7 @@ Content of the mail!
 				"newsletter-send-KAV4QKP2PFXLWHG5XM3E6X23PROVB5DGNDSABUPA6XQIODZDJ6UA====.body.txt":    "",
 			},
 			expectedMails: []mailer.Mail{{
-				FromAddr:        "user@club1.fr",
-				FromName:        "Display Name",
+				From:            "Display Name <user@club1.fr>",
 				To:              "user@club1.fr",
 				Id:              "user-KAV4QKP2PFXLWHG5XM3E6X23PROVB5DGNDSABUPA6XQIODZDJ6UA====@club1.fr",
 				InReplyTo:       "", // FIXME: shouldn't it be in reply to our message ID?
@@ -209,8 +204,7 @@ Subject: Send confirm
 				"newsletter-send-KAV4QKP2PFXLWHG5XM3E6X23PROVB5DGNDSABUPA6XQIODZDJ6UA====.body.txt":    "Content of the mail!",
 			},
 			expectedMails: []mailer.Mail{{
-				FromAddr:        "user@club1.fr",
-				FromName:        "Display Name",
+				From:            "Display Name <user@club1.fr>",
 				To:              "recipient@club1.fr",
 				ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
 				Subject:         "[Title] Send",

@@ -20,8 +20,7 @@
 package mailer
 
 type Mail struct {
-	FromAddr        string
-	FromName        string
+	From            string
 	To              string
 	Id              string
 	InReplyTo       string
@@ -30,10 +29,6 @@ type Mail struct {
 	ListUnsubscribe string
 	Subject         string
 	Body            string
-}
-
-func (m *Mail) From() string {
-	return m.FromName + " <" + m.FromAddr + ">"
 }
 
 type Mailer interface {

@@ -86,8 +86,7 @@ func TestDefaultMail(t *testing.T) {
 	nl := fakeNewsletter()
 	mail := nl.DefaultMail("Test subject", "Mail body")
 	expected := &mailer.Mail{
-		FromAddr:        "user@club1.fr",
-		FromName:        "Display Name",
+		From:            "Display Name <user@club1.fr>",
 		ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
 		Subject:         "[Title] Test subject",
 		Body: `Mail body
@@ -109,13 +108,13 @@ func TestSendPreviewMail(t *testing.T) {
 	}}
 
 	mail := mailer.Mail{
-		FromAddr: "user@club1.fr",
-		Subject:  "Coucou les loulous",
+		From:    "<user@club1.fr>",
+		Subject: "Coucou les loulous",
 	}
 	expected := &mailer.Mail{
-		FromAddr: "user@club1.fr",
-		Subject:  "Coucou les loulous (preview)",
-		To:       "user@club1.fr",
+		From:    "<user@club1.fr>",
+		Subject: "Coucou les loulous (preview)",
+		To:      "user@club1.fr",
 	}
 
 	err := nl.SendPreviewMail(mail)

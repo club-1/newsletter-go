@@ -91,6 +91,14 @@ func (nl *Newsletter) LocalUserAddr() string {
 	return nl.LocalUser + "@" + nl.Hostname
 }
 
+func (nl *Newsletter) FromHdr() string {
+	if nl.Config.Settings.DisplayName != "" {
+		return fmt.Sprintf(`%s <%s>`, nl.Config.Settings.DisplayName, nl.LocalUserAddr())
+	} else {
+		return fmt.Sprintf("<%s>", nl.LocalUserAddr())
+	}
+}
+
 func (nl *Newsletter) UnsubscribeAddr() string {
 	return nl.LocalUser + "+" + RouteUnSubscribe + "@" + nl.Hostname
 }
@@ -114,8 +122,7 @@ func (nl *Newsletter) DefaultMail(subject string, body string) *mailer.Mail {
 	}
 
 	return &mailer.Mail{
-		FromAddr:        nl.LocalUser + "@" + nl.Hostname,
-		FromName:        nl.Config.Settings.DisplayName,
+		From:            nl.FromHdr(),
 		ListUnsubscribe: fmt.Sprintf("<mailto:%s>", nl.UnsubscribeAddr()),
 		Subject:         subject,
 		Body:            body,

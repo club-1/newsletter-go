@@ -97,7 +97,7 @@ func printPreview(mail *mailer.Mail) {
 	fmt.Print("================ PREVIEW START ================\n")
 	fmt.Print("┌---- Header ------\n")
 	fmt.Printf("| Subject: %s\n", mail.Subject)
-	fmt.Printf("| From: %s\n", mail.From())
+	fmt.Printf("| From: %s\n", mail.From)
 	fmt.Print("└------------------\n")
 	fmt.Printf("%s\n", mail.Body)
 	fmt.Print("================  PREVIEW END  ================\n")

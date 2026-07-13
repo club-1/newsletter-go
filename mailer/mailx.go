@@ -54,7 +54,7 @@ func (m *mailxMailer) Send(mail *Mail) error {
 
 	args := []string{
 		"-s", mail.Subject,
-		"-r", mail.From(),
+		"-r", mail.From,
 		"-a", "Content-Transfer-Encoding: quoted-printable",
 		"-a", "Content-Type: text/plain; charset=UTF-8",
 	}
