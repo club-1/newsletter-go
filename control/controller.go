@@ -277,28 +277,18 @@ func (c *Controller) sendConfirm(req *Request) error {
 	subjectFilePath := filepath.Join(os.TempDir(), "newsletter-send-"+hash+".subject.txt")
 
 	var body string
-	_, err = os.Stat(bodyFilePath)
-	if errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("hash does not match existing temporary body file")
-	} else {
-		bodyB, err := os.ReadFile(bodyFilePath)
-		if err != nil {
-			return fmt.Errorf("read temporary body file: %w", err)
-		}
-		body = string(bodyB)
+	bodyB, err := os.ReadFile(bodyFilePath)
+	if err != nil {
+		return fmt.Errorf("read temporary body file: %w", err)
 	}
+	body = string(bodyB)
 
 	var subject string
-	_, err = os.Stat(subjectFilePath)
-	if errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("hash does not match existing temporary subject file")
-	} else {
-		subjectB, err := os.ReadFile(subjectFilePath)
-		if err != nil {
-			return fmt.Errorf("read temporary subject file: %w", err)
-		}
-		subject = string(subjectB)
+	subjectB, err := os.ReadFile(subjectFilePath)
+	if err != nil {
+		return fmt.Errorf("read temporary subject file: %w", err)
 	}
+	subject = string(subjectB)
 
 	mail := c.nl.DefaultMail(subject, body)
 	mail.Body += fmt.Sprintf(messages.Newsletter_footer.Print(), c.nl.UnsubscribeAddr())
