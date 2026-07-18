@@ -87,7 +87,7 @@ func TestDefaultMail(t *testing.T) {
 	mail := nl.DefaultMail("Test subject", "Mail body")
 	expected := &mailer.Mail{
 		From:            "Display Name <user@club1.fr>",
-		ListId:          `"Display Name" <user.club1.fr>`,
+		ListId:          "Display Name <user.club1.fr>",
 		ListUnsubscribe: "<mailto:user+unsubscribe@club1.fr>",
 		Subject:         "[Title] Test subject",
 		Body: `Mail body

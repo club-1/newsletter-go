@@ -101,7 +101,11 @@ func (nl *Newsletter) FromHdr() string {
 }
 
 func (nl *Newsletter) ListIdHdr() string {
-	return fmt.Sprintf(`%q <%s.%s>`, nl.Config.Settings.DisplayName, nl.LocalUser, nl.Hostname)
+	if nl.Config.Settings.DisplayName != "" {
+		return fmt.Sprintf(`%s <%s.%s>`, nl.Config.Settings.DisplayName, nl.LocalUser, nl.Hostname)
+	} else {
+		return fmt.Sprintf("<%s.%s>", nl.LocalUser, nl.Hostname)
+	}
 }
 
 func (nl *Newsletter) UnsubscribeAddr() string {
