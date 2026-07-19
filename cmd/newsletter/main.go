@@ -28,7 +28,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/charmbracelet/huh"
+	"charm.land/huh/v2"
 	"github.com/club-1/newsletter-go/v3"
 	"github.com/club-1/newsletter-go/v3/mailer"
 	"github.com/club-1/newsletter-go/v3/messages"
