@@ -20,6 +20,7 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -44,7 +45,18 @@ func assertFileMatch(t *testing.T, path string, expected string) {
 
 }
 
-func TestInitForwardFiles(t *testing.T) {
+func assertFileNotExist(t *testing.T, path string) {
+	t.Helper()
+	_, err := os.Stat(path)
+	if err == nil {
+		t.Errorf("file %s exists", path)
+	}
+	if !errors.Is(err, os.ErrNotExist) {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func TestInitStop(t *testing.T) {
 	homeDir := t.TempDir()
 	t.Setenv("HOME", homeDir)
 
@@ -63,6 +75,12 @@ func TestInitForwardFiles(t *testing.T) {
 	for file, expected := range expectedFiles {
 		assertFileMatch(t, filepath.Join(homeDir, file), expected)
 	}
+
+	err = stop(nil)
+	for file := range expectedFiles {
+		assertFileNotExist(t, filepath.Join(homeDir, file))
+	}
+
 }
 
 func must(t *testing.T, f func() error) {
