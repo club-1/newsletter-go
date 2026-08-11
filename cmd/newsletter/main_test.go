@@ -64,3 +64,92 @@ func TestInitForwardFiles(t *testing.T) {
 		assertFileMatch(t, filepath.Join(homeDir, file), expected)
 	}
 }
+
+func must(t *testing.T, f func() error) {
+	t.Helper()
+	if err := f(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestGetSubjectBody(t *testing.T) {
+	tmp := t.TempDir()
+	stdin := filepath.Join(tmp, "stdin")
+	body := filepath.Join(tmp, "body")
+	cases := []struct {
+		name string // description of this test case
+		// Named input parameters for target function.
+		args            []string
+		setStdin        bool
+		expectedSubject string
+		expectedBody    string
+		expectError     bool
+	}{
+		{
+			name:        "empty args",
+			args:        []string{},
+			expectError: true,
+		},
+		{
+			name:        "single arg without stdin",
+			args:        []string{"subject"},
+			setStdin:    false,
+			expectError: true,
+		},
+		{
+			name:            "single arg with stdin",
+			args:            []string{"subject"},
+			setStdin:        true,
+			expectedSubject: "subject",
+			expectedBody:    "stdin",
+		},
+		{
+			name:        "two args non-existing body file",
+			args:        []string{"subject", "non-existing"},
+			expectError: true,
+		},
+		{
+			name:            "two args existing body file",
+			args:            []string{"subject", body},
+			expectedSubject: "subject",
+			expectedBody:    "body",
+		},
+		{
+			name:        "three args",
+			args:        []string{"one", "two", "three"},
+			expectError: true,
+		},
+	}
+	must(t, func() error { return os.WriteFile(stdin, []byte("stdin"), 0o666) })
+	must(t, func() error { return os.WriteFile(body, []byte("body"), 0o666) })
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if c.setStdin {
+				var err error
+				prevStdin := os.Stdin
+				t.Cleanup(func() { os.Stdin = prevStdin })
+				os.Stdin, err = os.Open(stdin)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+			}
+			subject, body, err := getSubjectBody(c.args)
+			if err != nil {
+				if !c.expectError {
+					t.Errorf("unexpected error: %v", err)
+				}
+				return
+			}
+			if c.expectError {
+				t.Fatal("expected an error")
+			}
+			if subject != c.expectedSubject {
+				t.Errorf("subject = %v, expected %v", subject, c.expectedSubject)
+			}
+			if body != c.expectedBody {
+				t.Errorf("body = %v, expected %v", body, c.expectedBody)
+			}
+		})
+	}
+}
