@@ -30,7 +30,6 @@ import (
 
 	"charm.land/huh/v2"
 	"github.com/club-1/newsletter-go/v3"
-	"github.com/club-1/newsletter-go/v3/mailer"
 	"github.com/club-1/newsletter-go/v3/messages"
 )
 
@@ -92,16 +91,6 @@ func getSubjectBody(args []string) (string, string, error) {
 	return args[0], string(bodyB), nil
 }
 
-func printPreview(mail *mailer.Mail) {
-	fmt.Print("================ PREVIEW START ================\n")
-	fmt.Print("┌---- Header ------\n")
-	fmt.Printf("| Subject: %s\n", mail.Subject)
-	fmt.Printf("| From: %s\n", mail.From)
-	fmt.Print("└------------------\n")
-	fmt.Printf("%s\n", mail.Body)
-	fmt.Print("================  PREVIEW END  ================\n")
-}
-
 func initForwardFiles() error {
 	prefix, err := getCmdPrefix()
 	if err != nil {
@@ -138,7 +127,7 @@ func initForwardFiles() error {
 	return nil
 }
 
-func stop(nl *newsletter.Newsletter) error {
+func stop(_ *newsletter.Newsletter) error {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return fmt.Errorf("get user home directory: %w", err)
