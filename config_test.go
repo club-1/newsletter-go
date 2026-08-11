@@ -134,3 +134,46 @@ func subTestSaveSettings(t *testing.T, settings newsletter.Settings, expected st
 		t.Errorf("expected:\n%s\ngot:\n%s", expected, content)
 	}
 }
+
+func TestSubscribeUnsubscribe(t *testing.T) {
+	var err error
+	tmp := t.TempDir()
+	emails := filepath.Join(tmp, "emails")
+	config := &newsletter.Config{
+		Dir: tmp,
+	}
+
+	assertEmailsEquals := func(expected string) {
+		actual, err := os.ReadFile(emails)
+		if err != nil {
+			t.Error("reading emails: unexpected error: ", err)
+		}
+		if string(actual) != expected {
+			t.Errorf("expected:\n%s\nactual:\n%s", expected, actual)
+		}
+	}
+
+	err = config.Subscribe("test@club1.fr")
+	if err != nil {
+		t.Error("subscribe 1: unexpected error: ", err)
+	}
+	assertEmailsEquals("test@club1.fr\n")
+
+	err = config.Subscribe("67@club1.fr")
+	if err != nil {
+		t.Error("subscribe 2: unexpected error: ", err)
+	}
+	assertEmailsEquals("test@club1.fr\n67@club1.fr\n")
+
+	err = config.Unsubscribe("test@club1.fr")
+	if err != nil {
+		t.Error("unsubscribe 1: unexpected error: ", err)
+	}
+	assertEmailsEquals("67@club1.fr\n")
+
+	err = config.Unsubscribe("test@club1.fr")
+	if err == nil {
+		t.Error("unsubscribe 1: expected an error")
+	}
+	assertEmailsEquals("67@club1.fr\n")
+}
